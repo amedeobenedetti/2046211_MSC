@@ -3,12 +3,12 @@ services:
   mars-simulator:
     image: mars-iot-simulator:multiarch_v1
     container_name: mars-simulator
-    ports:
+    ports: 
       - "8080:8080"
     restart: unless-stopped
 
   rabbitmq:
-    image: rabbitmq:3-management
+    image: rabbitmq:4.2.4-management
     container_name: mars-rabbitmq
     ports:
       - "5672:5672"
@@ -41,6 +41,18 @@ services:
       - rabbitmq
       - mars-simulator
     restart: unless-stopped
+
+  postgres:
+    image: postgres:15
+    container_name: mars_db
+    environment:
+      POSTGRES_USER: mars
+      POSTGRES_PASSWORD: mars
+      POSTGRES_DB: mars
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./source/database/init.sql:/docker-entrypoint-initdb.d/init.sql
 
 volumes:
   rabbitmq_data:

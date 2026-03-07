@@ -1,3 +1,5 @@
 .mars-iot-simulator-oci/
 .DS_Store
 mars-iot-simulator-oci.tar
+mars-iot-simulator-docker.tar
+*/.env
