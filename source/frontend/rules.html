@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<meta charset="UTF-8">
+<title>Rules</title>
+</head>
+
+<body>
+
+<h1>Automation Rules</h1>
+
+<h2>Create Rule</h2>
+
+<form id="ruleForm">
+
+Sensor
+<input id="sensor">
+
+Metric
+<input id="metric">
+
+Operator
+<select id="operator">
+<option>></option>
+<option><</option>
+<option>>=</option>
+<option><=</option>
+<option>==</option>
+<option>!=</option>
+</select>
+
+Threshold
+<input id="threshold" type="number">
+
+Actuator
+<input id="actuator">
+
+State
+<select id="state">
+<option>ON</option>
+<option>OFF</option>
+</select>
+
+<button type="submit">Create</button>
+
+</form>
+
+<h2>Rules</h2>
+
+<div id="rules"></div>
+
+<script src="js/api.js"></script>
+<script src="js/rules.js"></script>
+
+</body>
+
+</html>
