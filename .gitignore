@@ -3,3 +3,5 @@
 mars-iot-simulator-oci.tar
 mars-iot-simulator-docker.tar
 */.env
+*.pyc
+*/__pycache__

@@ -56,3 +56,18 @@ services:
       - ./source/database/init.sql:/docker-entrypoint-initdb.d/init.sql
     depends_on:
       - mars-simulator
+
+
+  processing-service:
+    build:
+      context: ./processing-service
+    container_name: mars-processing-service
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./processing-service:/app
+    depends_on:
+      - ingestion-service
+      - rabbitmq
+      - mars-simulator
+    restart: unless-stopped

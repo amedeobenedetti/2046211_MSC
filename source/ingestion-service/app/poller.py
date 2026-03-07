@@ -20,33 +20,30 @@ from app.simulator_client import SimulatorClient
 logger = logging.getLogger(__name__)
 
 
-async def _connect_rabbitmq():
+# async def _connect_rabbitmq():
 
-    while True:
-        try:
-            publisher = RabbitMQPublisher(
-                host=RABBITMQ_HOST,
-                port=RABBITMQ_PORT,
-                username=RABBITMQ_USER,
-                password=RABBITMQ_PASS,
-                exchange=RABBITMQ_EXCHANGE,
-            )
+#     while True:
+#         try:
+#             publisher = RabbitMQPublisher(
+#                 exchange=RABBITMQ_EXCHANGE,
+#             )
 
-            publisher.connect()
+#             publisher.connect()
 
-            logger.info("Connected to RabbitMQ")
+#             logger.info("Connected to RabbitMQ")
 
-            return publisher
+#             return publisher
 
-        except pika.exceptions.AMQPConnectionError:
-            logger.warning("RabbitMQ not ready yet, retrying in 5 seconds...")
-            await asyncio.sleep(5)
+#         except pika.exceptions.AMQPConnectionError:
+#             logger.warning("RabbitMQ not ready yet, retrying in 5 seconds...")
+#             await asyncio.sleep(5)
 
 
 async def polling_loop():
 
     simulator = SimulatorClient(SIMULATOR_BASE_URL)
-    publisher = await _connect_rabbitmq()
+    publisher = RabbitMQPublisher(exchange=RABBITMQ_EXCHANGE)
+    publisher.connect()
     discovery = await simulator.get_discovery()
     rest_sensors = discovery["rest_sensors"]
 
