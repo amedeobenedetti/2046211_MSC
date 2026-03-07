@@ -1,0 +1,46 @@
+services:
+
+  mars-simulator:
+    image: mars-iot-simulator:multiarch_v1
+    container_name: mars-simulator
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: mars-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: mars
+      RABBITMQ_DEFAULT_PASS: mars
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    restart: unless-stopped
+
+  ingestion-service:
+    build:
+      context: ./ingestion-service
+    container_name: mars-ingestion-service
+    ports:
+      - "8000:8000"
+    environment:
+      SIMULATOR_BASE_URL: http://mars-simulator:8080
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: mars
+      RABBITMQ_PASS: mars
+      RABBITMQ_EXCHANGE: mars.events
+      RABBITMQ_QUEUE: sensor.events
+      RABBITMQ_ROUTING_KEY: sensor.rest
+      POLL_INTERVAL_SECONDS: 5
+      SENSOR_NAME: greenhouse_temperature
+    depends_on:
+      - rabbitmq
+      - mars-simulator
+    restart: unless-stopped
+
+volumes:
+  rabbitmq_data:
