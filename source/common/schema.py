@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import List, Literal
-from datetime import datetime
+from datetime import datetime, timezone
 
 class Measurements(BaseModel):
     metric: str = Field(..., description="The name of the metric")
@@ -20,7 +20,6 @@ class UnifiedEvent(BaseModel):
     ] = Field(..., description="The type of the event")
     source: Literal["rest", "topic"] = Field(..., description="The source of the event, either 'rest' or 'topic'")
     device_id: str = Field(..., description="The unique identifier of the device that generated the event")
-    schema_family: str = Field(..., description="The schema family of the event")
-    timestamp: datetime = Field(default_factory=datetime.timezone.utc, description="The timestamp of the event")
+    timestamp: datetime = Field(lambda: datetime.now(timezone.utc), description="The timestamp of the event")
     status: Literal["ok", "warning"] = Field(..., description="The status of the event, either 'ok' or 'warning'")
     measurements: List[Measurements] = Field(..., description="The measurements associated with the event")
