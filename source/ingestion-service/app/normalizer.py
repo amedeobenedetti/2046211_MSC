@@ -1,25 +1,22 @@
 from datetime import datetime, timezone
 from uuid import uuid4
 
-from app.models import Measurement, UnifiedEvent
+from app.common.models import Measurement, UnifiedEvent
 
 
-def _parse_timestamp(raw_timestamp: str | None) -> datetime:
-    if not raw_timestamp:
+def _parse_timestamp(ts: str | None) -> datetime:
+
+    if not ts:
         return datetime.now(timezone.utc)
 
     try:
-        return datetime.fromisoformat(raw_timestamp.replace("Z", "+00:00"))
-    except ValueError:
+        return datetime.fromisoformat(ts.replace("Z", "+00:00"))
+    except Exception:
         return datetime.now(timezone.utc)
 
 
-def _build_event(
-    source_name: str,
-    schema_family: str,
-    payload: dict,
-    measurements: list[Measurement],
-) -> UnifiedEvent:
+def _build_event(source_name, schema_family, payload, measurements):
+
     return UnifiedEvent(
         event_id=str(uuid4()),
         source_kind="rest_sensor",
@@ -31,12 +28,13 @@ def _build_event(
     )
 
 
-def normalize_scalar_sensor(source_name: str, schema_family: str, payload: dict) -> UnifiedEvent:
+def normalize_scalar_sensor(source_name, schema_family, payload):
+
     return _build_event(
-        source_name=source_name,
-        schema_family=schema_family,
-        payload=payload,
-        measurements=[
+        source_name,
+        schema_family,
+        payload,
+        [
             Measurement(
                 metric=payload.get("metric", source_name),
                 value=float(payload["value"]),
@@ -46,25 +44,24 @@ def normalize_scalar_sensor(source_name: str, schema_family: str, payload: dict)
     )
 
 
-def normalize_chemistry_sensor(source_name: str, schema_family: str, payload: dict) -> UnifiedEvent:
-    measurements = [
-        Measurement(
-            metric=item["metric"],
-            value=float(item["value"]),
-            unit=item.get("unit", ""),
+def normalize_chemistry_sensor(source_name, schema_family, payload):
+
+    measurements = []
+
+    for m in payload.get("measurements", []):
+        measurements.append(
+            Measurement(
+                metric=m["metric"],
+                value=float(m["value"]),
+                unit=m.get("unit", ""),
+            )
         )
-        for item in payload.get("measurements", [])
-    ]
 
-    return _build_event(
-        source_name=source_name,
-        schema_family=schema_family,
-        payload=payload,
-        measurements=measurements,
-    )
+    return _build_event(source_name, schema_family, payload, measurements)
 
 
-def normalize_level_sensor(source_name: str, schema_family: str, payload: dict) -> UnifiedEvent:
+def normalize_level_sensor(source_name, schema_family, payload):
+
     measurements = []
 
     if "level_pct" in payload:
@@ -77,15 +74,11 @@ def normalize_level_sensor(source_name: str, schema_family: str, payload: dict) 
             Measurement(metric="level_liters", value=float(payload["level_liters"]), unit="L")
         )
 
-    return _build_event(
-        source_name=source_name,
-        schema_family=schema_family,
-        payload=payload,
-        measurements=measurements,
-    )
+    return _build_event(source_name, schema_family, payload, measurements)
 
 
-def normalize_particulate_sensor(source_name: str, schema_family: str, payload: dict) -> UnifiedEvent:
+def normalize_particulate_sensor(source_name, schema_family, payload):
+
     measurements = []
 
     if "pm1_ug_m3" in payload:
@@ -103,15 +96,11 @@ def normalize_particulate_sensor(source_name: str, schema_family: str, payload: 
             Measurement(metric="pm10", value=float(payload["pm10_ug_m3"]), unit="ug/m3")
         )
 
-    return _build_event(
-        source_name=source_name,
-        schema_family=schema_family,
-        payload=payload,
-        measurements=measurements,
-    )
+    return _build_event(source_name, schema_family, payload, measurements)
 
 
-def normalize_rest_sensor(source_name: str, schema_family: str, payload: dict) -> UnifiedEvent:
+def normalize_rest_sensor(source_name, schema_family, payload):
+
     if schema_family == "rest.scalar.v1":
         return normalize_scalar_sensor(source_name, schema_family, payload)
 
@@ -124,4 +113,4 @@ def normalize_rest_sensor(source_name: str, schema_family: str, payload: dict) -
     if schema_family == "rest.particulate.v1":
         return normalize_particulate_sensor(source_name, schema_family, payload)
 
-    raise ValueError(f"Unsupported REST schema_family: {schema_family}")
+    raise ValueError(f"Unsupported schema {schema_family}")

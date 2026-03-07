@@ -1,10 +1,10 @@
 import pika
 import json
 
-from common.schema import UnifiedEvent
-from rule_repository import get_rules
-from rule_engine import evaluate_event
-from actuator_client import set_actuator
+from .common.schema import UnifiedEvent
+from .rule_repository import get_rules
+from .rule_engine import evaluate_event
+from .actuator_client import set_actuator
 
 
 connection = pika.BlockingConnection(

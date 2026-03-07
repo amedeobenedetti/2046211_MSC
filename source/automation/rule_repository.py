@@ -1,6 +1,6 @@
-from db import SessionLocal
-from common.models import RuleModel
-from common.rules import AutomationRule
+from ..db import SessionLocal
+from .common.models import RuleModel
+from .common.rules import AutomationRule
 
 def get_rules():
     db = SessionLocal()

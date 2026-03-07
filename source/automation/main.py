@@ -1,7 +1,6 @@
-from event_consumer import start
-from db import engine, SessionLocal
-from common.models import Base, RuleModel
-from common.rules import AutomationRule
+from .event_consumer import start
+from ..db import engine, SessionLocal
+from .common.rules import AutomationRule, Base, RuleModel
 from fastapi import FastAPI
 
 app = FastAPI()
