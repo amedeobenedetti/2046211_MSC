@@ -201,4 +201,13 @@ class RabbitMQConsumer:
     def start_consuming(self) -> None:
 
         if self.channel is None:
-            raise RuntimeError("Consumer
+            raise RuntimeError("Consumer channel not connected")
+
+        logger.info("Consumer started")
+
+        self.channel.start_consuming()
+
+    def close(self) -> None:
+
+        if self.connection and self.connection.is_open:
+            self.connection.close()
