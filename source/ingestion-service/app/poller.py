@@ -70,10 +70,9 @@ async def polling_loop():
                 publisher.publish(f"{RABBITMQ_REST_SENSORS_ROUTING_KEY}.{sensor_id}", event.model_dump(mode="json"))
 
                 logger.info(
-                    "Published event_id=%s source=%s schema=%s",
+                    "Published event_id=%s from source=%s",
                     event.event_id,
-                    event.source_name,
-                    event.schema_family,
+                    sensor_id,
                 )
 
         except Exception as exc:

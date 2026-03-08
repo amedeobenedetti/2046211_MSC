@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from typing import List, Literal
+from typing import List, Literal, Any
 from pydantic import BaseModel, Field
 
 
@@ -12,8 +12,13 @@ class Measurement(BaseModel):
     value: float = Field(..., description="The value of the metric")
     unit: str = Field(..., description="The unit of the metric")
 
-
 class UnifiedEvent(BaseModel):
+    event_id: str = Field(..., description="Unique event identifier")
+    event_type: Literal["measurement", "actuator"]
+    event_payload: Any
+
+
+class MeasurementEvent(BaseModel):
     event_id: str = Field(..., description="Unique event identifier")
     source_kind: Literal["rest_sensor", "telemetry_topic"] = Field(
         ...,
@@ -48,3 +53,16 @@ class UnifiedEvent(BaseModel):
         ...,
         description="The normalized measurements associated with the event"
     )
+
+class ActuatorEvent(BaseModel):
+    event_id: str
+    rule_id: int
+    rule_name: str
+    sensor_name: str
+    metric_name: str
+    actuator_name: str
+    target_state: str
+    measured_value: float
+    threshold_value: float
+    operator: str
+    unit: str | None = None

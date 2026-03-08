@@ -18,5 +18,5 @@ async def health() -> dict:
 
 
 @app.on_event("startup")
-async def startup_event() -> None:
+def startup_event() -> None:
     asyncio.create_task(polling_loop())

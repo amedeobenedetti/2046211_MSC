@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from uuid import uuid4
 
-from app.common.models import Measurement, UnifiedEvent
+from app.common.models import Measurement, MeasurementEvent, UnifiedEvent
 
 
 def _parse_timestamp(ts: str | None) -> datetime:
@@ -16,8 +16,7 @@ def _parse_timestamp(ts: str | None) -> datetime:
 
 
 def _build_event(source_name, schema_family, payload, measurements):
-
-    return UnifiedEvent(
+    event = MeasurementEvent(
         event_id=str(uuid4()),
         source_kind="rest_sensor",
         source_name=source_name,
@@ -26,6 +25,10 @@ def _build_event(source_name, schema_family, payload, measurements):
         status=payload.get("status", "ok"),
         measurements=measurements,
     )
+    return UnifiedEvent(
+        event_id=event.event_id,
+        event_type="measurement",
+        event_payload=event)
 
 
 def normalize_scalar_sensor(source_name, schema_family, payload):

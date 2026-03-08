@@ -34,8 +34,13 @@ services:
       RABBITMQ_PASS: mars
       RABBITMQ_EXCHANGE: mars.events
       RABBITMQ_QUEUE: sensor.events
-      RABBITMQ_ROUTING_KEY: sensor.rest
+      RABBITMQ_REST_SENSORS_ROUTING_KEY: sensor.rest
       POLL_INTERVAL_SECONDS: 5
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: mars_rules
+      POSTGRES_USER: mars
+      POSTGRES_PASSWORD: mars
     volumes:
       - ./ingestion-service:/app
     depends_on:
@@ -44,30 +49,93 @@ services:
     restart: unless-stopped
 
   postgres:
-    image: postgres:15
+    image: postgres:16
     container_name: mars-db
     environment:
       POSTGRES_USER: mars
       POSTGRES_PASSWORD: mars
-      POSTGRES_DB: mars
+      POSTGRES_DB: mars_rules
     ports:
       - "5432:5432"
     volumes:
-      - ./source/database/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./postgres/postgres_data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d
     depends_on:
       - mars-simulator
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mars -d mars"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
 
-
-  processing-service:
+  rule-service:
     build:
-      context: ./processing-service
-    container_name: mars-processing-service
+      context: ./rule-service
+    container_name: mars-rule-service
     ports:
       - "8001:8001"
     volumes:
-      - ./processing-service:/app
+      - ./rule-service:/app
+    depends_on:
+      ingestion-service:
+        condition: service_started
+      rabbitmq:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  dashboard-service:
+    build:
+      context: ./dashboard-service
+    container_name: mars-dashboard-service
+    ports:
+      - "8003:8003"
+    volumes:
+      - ./dashboard-service:/app
+    environment:
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: mars
+      RABBITMQ_PASS: mars
+      RABBITMQ_EXCHANGE: mars.events
+      RABBITMQ_QUEUE: sensor.events
+      RABBITMQ_REST_SENSORS_ROUTING_KEY: sensor.rest
     depends_on:
       - ingestion-service
-      - rabbitmq
-      - mars-simulator
     restart: unless-stopped
+
+  actuator-service:
+    build:
+      context: ./actuator-service
+    container_name: mars-actuator-service
+    ports:
+      - "8004:8004"
+    volumes:
+      - ./actuator-service:/app
+    environment:
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: mars
+      RABBITMQ_PASS: mars
+      RABBITMQ_EXCHANGE: mars.events
+      RABBITMQ_QUEUE: sensor.events
+      RABBITMQ_REST_SENSORS_ROUTING_KEY: sensor.rest
+    depends_on:
+      - rule-service
+    restart: unless-stopped
+
+  frontend-service:
+    build:
+      context: ./frontend-service
+    container_name: mars-frontend-service
+    ports:
+      - "8002:8002"
+    volumes:
+      - ./frontend-service:/app
+    depends_on:
+      - dashboard-service
+    restart: unless-stopped
+

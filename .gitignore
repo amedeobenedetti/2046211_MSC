@@ -5,3 +5,4 @@ mars-iot-simulator-docker.tar
 */.env
 *.pyc
 */__pycache__
+source/postgres/postgres_data/*

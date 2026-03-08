@@ -14,7 +14,8 @@ RABBITMQ_USER = os.getenv("RABBITMQ_USER", "mars")
 RABBITMQ_PASS = os.getenv("RABBITMQ_PASS", "mars")
 
 RABBITMQ_EXCHANGE = os.getenv("RABBITMQ_EXCHANGE", "mars.events") 
-RABBITMQ_REST_SENSORS_ROUTING_KEY = os.getenv("RABBITMQ_ROUTING_KEY", "sensor.rest")
+RABBITMQ_REST_SENSORS_ROUTING_KEY = os.getenv("RABBITMQ_REST_SENSORS_ROUTING_KEY", "sensor.rest")
+RABBITMQ_ACTUATOR_ROUTING_KEY = os.getenv("RABBITMQ_ACTUATOR_ROUTING_KEY", "actuator.trigger")
 
 POLL_INTERVAL_SECONDS = float(os.getenv("POLL_INTERVAL_SECONDS", "5"))
 
@@ -29,7 +30,7 @@ from pydantic import ValidationError
 class RabbitMQPublisher:
     def __init__(
         self,
-        exchange: str,
+        exchange: str = RABBITMQ_EXCHANGE,
     ):
         
         self.exchange = exchange
@@ -122,7 +123,7 @@ class RabbitMQConsumer:
 
                 logger.info("Connected to RabbitMQ")
 
-                self._declare_sensor_queues()
+                self._declare_queues()
 
                 return
 
@@ -130,7 +131,7 @@ class RabbitMQConsumer:
                 logger.warning("RabbitMQ not ready yet, retrying in 3 seconds...")
                 time.sleep(3)
 
-    def _declare_sensor_queues(self) -> None:
+    def _declare_queues(self) -> None:
 
         for routing_key in self.routing_keys:
 
