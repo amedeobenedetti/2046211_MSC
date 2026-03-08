@@ -1,40 +1,32 @@
-const API_BASE = "http://localhost:8004"
+const DASHBOARD_API = "http://localhost:8003"
+const ACTUATOR_API = "http://localhost:8004"
+const RULE_API = "http://localhost:8001"
 
-async function getSensors() {
-    const res = await fetch(API_BASE + "/sensors")
+
+export async function getState() {
+    const res = await fetch(DASHBOARD_API + "/state")
     return await res.json()
 }
 
-async function getActuators() {
-    const res = await fetch(API_BASE + "/actuators")
+export async function getActuators() {
+    const res = await fetch(ACTUATOR_API + "/actuators")
     return await res.json()
 }
 
-async function setActuator(name, state) {
+export async function setActuator(name, command) {
 
-    await fetch(API_BASE + "/actuators/" + name, {
+    await fetch(ACTUATOR_API + "/actuators/" + name, {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
         },
         body: JSON.stringify({
-            state: state
+            command: command
         })
     })
 }
 
-async function getRules() {
-    const res = await fetch(API_BASE + "/rules")
+export async function getRules() {
+    const res = await fetch(RULE_API + "/rules")
     return await res.json()
-}
-
-async function createRule(rule) {
-
-    await fetch(API_BASE + "/rules", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(rule)
-    })
 }

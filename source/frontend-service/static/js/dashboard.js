@@ -1,11 +1,10 @@
-const API_URL = "http://localhost:8004/state"
+import { getState, getActuators, setActuator } from "./api.js"
 
 async function loadSensors() {
 
     try {
 
-        const res = await fetch(API_URL)
-        const data = await res.json()
+        const data = await getState()
 
         const grid = document.getElementById("sensorGrid")
         grid.innerHTML = ""
@@ -17,9 +16,10 @@ async function loadSensors() {
                 const card = document.createElement("div")
                 card.className = "sensor-card"
 
-                const statusClass = sensor.status === "ok"
-                    ? "status-ok"
-                    : "status-warning"
+                const statusClass =
+                    sensor.status === "ok"
+                        ? "status-ok"
+                        : "status-warning"
 
                 card.innerHTML = `
                     <div class="sensor-title">
@@ -39,7 +39,14 @@ async function loadSensors() {
                     </div>
 
                     <div class="sensor-timestamp">
-                        ${new Intl.DateTimeFormat('en-US', {dateStyle: 'short', timeStyle: 'short', timeZone: 'Europe/Rome'}).format(new Date(sensor.timestamp))}
+                        ${new Intl.DateTimeFormat(
+                            'en-US',
+                            {
+                                dateStyle: 'short',
+                                timeStyle: 'short',
+                                timeZone: 'Europe/Rome'
+                            }
+                        ).format(new Date(sensor.timestamp))}
                     </div>
                 `
 
@@ -49,13 +56,55 @@ async function loadSensors() {
 
         })
 
-    } catch(err) {
+    } catch (err) {
 
         console.error("Error loading sensors:", err)
 
     }
+
 }
 
-loadSensors()
+async function loadActuators() {
+
+    const actuators = await getActuators()
+
+    const grid = document.getElementById("actuatorGrid")
+    grid.innerHTML = ""
+
+    actuators.forEach(act => {
+
+        const card = document.createElement("div")
+        card.className = "actuator-card"
+
+        const button = document.createElement("button")
+        button.textContent = act.state
+
+        button.onclick = async () => {
+
+            const newState = act.state === "ON" ? "OFF" : "ON"
+
+            await setActuator(act.name, newState)
+
+            loadActuators()
+        }
+
+        card.innerHTML = `<div>${act.name}</div>`
+        card.appendChild(button)
+
+        grid.appendChild(card)
+
+    })
+
+}
+
+async function init() {
+
+    await loadSensors()
+    await loadActuators()
+
+}
+
+init()
 
 setInterval(loadSensors, 5000)
+setInterval(loadActuators, 5000)
