@@ -1,14 +1,58 @@
-body{
-font-family: Arial;
-background:#0f172a;
-color:white;
+body {
+font-family: Arial, sans-serif;
+background: #0f172a;
+color: white;
+margin: 0;
+padding: 0;
 }
 
-.sensor-card{
-background:#1e293b;
-padding:15px;
-margin:10px;
-border-radius:8px;
-width:200px;
-display:inline-block;
+header {
+background: #020617;
+padding: 20px;
+text-align: center;
+border-bottom: 2px solid #334155;
+}
+
+h1 {
+margin: 0;
+}
+
+section {
+padding: 20px;
+}
+
+#sensorGrid {
+display: grid;
+grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+gap: 20px;
+}
+
+.sensor-card {
+background: #1e293b;
+padding: 20px;
+border-radius: 10px;
+box-shadow: 0 0 10px rgba(0,0,0,0.4);
+}
+
+.sensor-title {
+font-size: 18px;
+margin-bottom: 10px;
+}
+
+.sensor-value {
+font-size: 28px;
+font-weight: bold;
+}
+
+.sensor-unit {
+font-size: 14px;
+color: #94a3b8;
+}
+
+.status-ok {
+color: #22c55e;
+}
+
+.status-warning {
+color: #facc15;
 }

@@ -1,31 +1,61 @@
-const API = "http://localhost:8000"
+const API_URL = "http://localhost:8000/state"
 
 async function loadSensors() {
 
-    const res = await fetch(API + "/state")
-    const data = await res.json()
+    try {
 
-    const container = document.getElementById("sensors")
-    container.innerHTML = ""
+        const res = await fetch(API_URL)
+        const data = await res.json()
 
-    Object.values(data).forEach(sensor => {
+        const grid = document.getElementById("sensorGrid")
+        grid.innerHTML = ""
 
-        sensor.measurements.forEach(m => {
+        Object.values(data).forEach(sensor => {
 
-            const div = document.createElement("div")
-            div.className = "sensor-card"
+            sensor.measurements.forEach(measure => {
 
-            div.innerHTML =
-                "<b>" + sensor.source_name + "</b><br>" +
-                m.metric + ": " +
-                m.value + " " +
-                m.unit
+                const card = document.createElement("div")
+                card.className = "sensor-card"
 
-            container.appendChild(div)
+                const statusClass = sensor.status === "ok"
+                    ? "status-ok"
+                    : "status-warning"
+
+                card.innerHTML = `
+                    <div class="sensor-title">
+                        ${sensor.source_name}
+                    </div>
+
+                    <div class="sensor-value">
+                        ${measure.value}
+                    </div>
+
+                    <div class="sensor-unit">
+                        ${measure.metric} (${measure.unit})
+                    </div>
+
+                    <div class="${statusClass}">
+                        status: ${sensor.status}
+                    </div>
+
+                    <div class="sensor-unit">
+                        ${sensor.timestamp}
+                    </div>
+                `
+
+                grid.appendChild(card)
+
+            })
+
         })
 
-    })
+    } catch(err) {
+
+        console.error("Error loading sensors:", err)
+
+    }
 }
 
-setInterval(loadSensors, 5000)
 loadSensors()
+
+setInterval(loadSensors, 5000)
