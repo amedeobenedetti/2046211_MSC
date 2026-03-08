@@ -14,7 +14,7 @@ class Measurement(BaseModel):
 
 class UnifiedEvent(BaseModel):
     event_id: str = Field(..., description="Unique event identifier")
-    event_type: Literal["measurement", "actuator"]
+    event_type: Literal["measurement", "actuator", "rules"]
     event_payload: Any
 
 
@@ -66,3 +66,19 @@ class ActuatorEvent(BaseModel):
     threshold_value: float
     operator: str
     unit: str | None = None
+
+
+class RuleEvent(BaseModel):
+    event_id: str
+    operation: Literal["add", "toggle", "update", "delete"]
+    rule_id: int | None = None
+    rule_name: str | None = None
+    rule_enabled: bool | None = None
+    sensor_name: str | None = None
+    metric_name: str | None = None
+    actuator_name: str | None = None
+    target_state: str | None = None
+    threshold_value: float | None = None
+    operator: str | None = None
+    unit: str | None = None
+

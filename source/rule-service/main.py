@@ -2,9 +2,10 @@ import logging
 from contextlib import asynccontextmanager
 from app.common.rabbitmq_config import (
     RABBITMQ_EXCHANGE,
-    RABBITMQ_REST_SENSORS_ROUTING_KEY
+    RABBITMQ_REST_SENSORS_ROUTING_KEY,
+    RABBITMQ_RULES_ROUTING_KEY
 )
-from app.handlers import handle_measurement_event
+from app.handlers import handle_measurement_event, handle_rules_event
 from fastapi import FastAPI, HTTPException
 from fastapi.concurrency import run_in_threadpool
 
@@ -17,22 +18,33 @@ logging.basicConfig(
 )
 
 
-consumer = None
+rest_consumer = None
+rules_consumer = None
 
-def run_consumer() -> None:
-    global consumer
-    consumer = RabbitMQConsumer(RABBITMQ_EXCHANGE, [f"{RABBITMQ_REST_SENSORS_ROUTING_KEY}.greenhouse_temperature"], handle_measurement_event)
-    consumer.connect()
-    run_in_threadpool(consumer.start_consuming())
-    print("Consumer started")
 
+def run_rest_sensors_consumer() -> None:
+    global rest_consumer
+    rest_consumer = RabbitMQConsumer("rules",RABBITMQ_EXCHANGE, [f"{RABBITMQ_REST_SENSORS_ROUTING_KEY}.#"], handle_measurement_event)
+    rest_consumer.connect()
+    run_in_threadpool(rest_consumer.start_consuming())
+    print("Rest Sensor Consumer started")
+
+def run_rules_consumer() -> None:
+    global rules_consumer
+    rules_consumer = RabbitMQConsumer("rules",RABBITMQ_EXCHANGE, [f"{RABBITMQ_RULES_ROUTING_KEY}.#"], handle_rules_event)
+    rules_consumer.connect()
+    run_in_threadpool(rules_consumer.start_consuming())
+    print("Rules Consumer started")
+    
 
 import threading
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    thread = threading.Thread(target=run_consumer, daemon=True)
+    thread = threading.Thread(target=run_rest_sensors_consumer, daemon=True)
     thread.start()
+    thread2 = threading.Thread(target=run_rules_consumer, daemon=True)
+    thread2.start()
     print("Startup Completed!")
     yield
     print("Shutdown Completed!")
@@ -44,12 +56,10 @@ app = FastAPI(title="Processing Service", version="0.1.0", lifespan=lifespan)
 async def health() -> dict:
     return {"status": "ok"}
 
-
-
 @app.get("/rules")
 async def get_rules() -> list[dict]:
     repo = RulesRepository()
-    rules = repo.get_enabled_rules()
+    rules = repo.get_rules()
 
     return [
         {
@@ -68,17 +78,3 @@ async def get_rules() -> list[dict]:
     ]
 
 
-
-from fastapi.middleware.cors import CORSMiddleware
-
-origins = [
-    "http://localhost:8002",
-]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)

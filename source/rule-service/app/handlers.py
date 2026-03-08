@@ -1,6 +1,6 @@
 import logging
 from typing import Any
-from app.common.models import UnifiedEvent, MeasurementEvent
+from app.common.models import UnifiedEvent, MeasurementEvent, RuleEvent
 from app.common.rabbitmq_config import RabbitMQPublisher, RABBITMQ_ACTUATOR_ROUTING_KEY
 from app.rule_engine import RuleEngine
 from app.rules_repository import RulesRepository
@@ -14,7 +14,7 @@ publisher = RabbitMQPublisher()
 publisher.connect()
 
 def handle_measurement_event(event: UnifiedEvent) -> None:
-    logger.info("Received event: event_id=%s", event.event_id)
+    # logger.info("Received measurement event: event_id=%s", event.event_id)
     if event.event_type != "measurement":
         logger.warning("Received non-measurement event: event_id=%s", event.event_id)
         return
@@ -22,11 +22,11 @@ def handle_measurement_event(event: UnifiedEvent) -> None:
     m_event = MeasurementEvent.model_validate(event.event_payload)
     
     # Evaluate rules for the event's source and trigger any that are satisfied
-    rules = rules_repository.get_enabled_rules_for_sensor(m_event.source_name)
+    rules = rules_repository.get_rules_for_sensor(m_event.source_name)
   
     triggered_rules = rule_engine.evaluate_event(m_event, rules)
-
-    print(f'Event {m_event.event_id} triggered {len(triggered_rules)} rules for {m_event.source_name}', flush=True)
+    # if len(triggered_rules) > 0:
+    #     print(f'Event {m_event.event_id} triggered {len(triggered_rules)} rules for {m_event.source_name}', flush=True)
     for triggered in triggered_rules:
         logger.info(
             "Rule triggered rule_id=%s rule_name=%s sensor=%s metric=%s measured=%s operator=%s threshold=%s actuator=%s target_state=%s",
@@ -52,4 +52,38 @@ def handle_measurement_event(event: UnifiedEvent) -> None:
         
         logger.info("Published actuator event: event_id=%s", new_event.event_id)
 
-        # rabbita verso dashboard
+
+def handle_rules_event(event: UnifiedEvent) -> None:
+    logger.info("Received rules event: event_id=%s", event.event_id)
+    if event.event_type != "rules":
+        logger.warning("Received non-rules event: event_id=%s", event.event_id)
+        return
+    
+    r_event = RuleEvent.model_validate(event.event_payload)
+    
+    if r_event.operation == "toggle":
+        logger.info("Detected toggle operation: rule_id=%s, rule_enabled=%s", str(r_event.rule_id), str(r_event.rule_enabled))
+        rules_repository.set_rule_state(r_event.rule_id, r_event.rule_enabled)
+
+    if r_event.operation == "add":
+        pass
+    if r_event.operation == "update":
+        r_list = rules_repository.get_rules()
+        for rule in r_list:
+            if rule.id == r_event.rule_id:
+                rule.name = r_event.rule_name if r_event.rule_name is not None else rule.name
+                rule.rule_enabled = r_event.rule_enabled if r_event.rule_enabled is not None else rule.rule_enabled
+                rule.sensor_name = r_event.sensor_name if r_event.sensor_name is not None else rule.sensor_name
+                rule.metric_name = r_event.metric_name if r_event.metric_name is not None else rule.metric_name
+                rule.actuator_name = r_event.actuator_name if r_event.actuator_name is not None else rule.actuator_name
+                rule.target_state = r_event.target_state if r_event.target_state is not None else rule.target_state
+                rule.operator = r_event.operator if r_event.operator is not None else rule.operator
+                rule.threshold_value = r_event.threshold_value if r_event.threshold_value is not None else rule.threshold_value
+                rule.unit = r_event.unit if r_event.unit is not None else rule.unit
+                rules_repository.update_rule(rule)
+
+    if r_event.operation == "delete":
+        pass
+
+    
+    

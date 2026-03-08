@@ -9,6 +9,9 @@ class RuleEngine:
         triggered: list[ActuatorEvent] = []
 
         for rule in rules:
+            if not rule.rule_enabled:
+                continue
+            
             matching_measurement = next(
                 (m for m in event.measurements if m.metric == rule.metric_name),
                 None,

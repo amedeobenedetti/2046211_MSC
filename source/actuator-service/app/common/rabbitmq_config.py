@@ -16,6 +16,8 @@ RABBITMQ_PASS = os.getenv("RABBITMQ_PASS", "mars")
 RABBITMQ_EXCHANGE = os.getenv("RABBITMQ_EXCHANGE", "mars.events") 
 RABBITMQ_REST_SENSORS_ROUTING_KEY = os.getenv("RABBITMQ_REST_SENSORS_ROUTING_KEY", "sensor.rest")
 RABBITMQ_ACTUATOR_ROUTING_KEY = os.getenv("RABBITMQ_ACTUATOR_ROUTING_KEY", "actuator.trigger")
+RABBITMQ_RULES_ROUTING_KEY = os.getenv("RABBITMQ_RULES_ROUTING_KEY", "rules")
+
 
 POLL_INTERVAL_SECONDS = float(os.getenv("POLL_INTERVAL_SECONDS", "5"))
 
@@ -72,16 +74,22 @@ class RabbitMQPublisher:
     def publish(self, routing_key: str, payload: dict) -> None:
         if self.channel is None:
             raise RuntimeError("RabbitMQ channel is not connected")
-
-        self.channel.basic_publish(
-            exchange=self.exchange,
-            routing_key=routing_key,
-            body=json.dumps(payload, default=str).encode("utf-8"),
-            properties=pika.BasicProperties(
-                content_type="application/json",
-                delivery_mode=2,
-            ),
-        )
+        try:
+            self.channel.basic_publish(
+                exchange=self.exchange,
+                routing_key=routing_key,
+                body=json.dumps(payload, default=str).encode("utf-8"),
+                properties=pika.BasicProperties(
+                    content_type="application/json",
+                    delivery_mode=2,
+                ),
+            )
+        except pika.exceptions.ChannelWrongStateError:
+            try:
+                self.close()
+                self.connect()
+            except:
+                self.connect()
 
     def close(self) -> None:
         if self.connection and self.connection.is_open:
@@ -90,7 +98,8 @@ class RabbitMQPublisher:
 
 class RabbitMQConsumer:
 
-    def __init__(self, exchange: str, routing_keys: list[str], callback_func: Callable) -> None:
+    def __init__(self, consumer_name: str, exchange: str, routing_keys: list[str], callback_func: Callable) -> None:
+        self.name = consumer_name
         self.routing_keys = routing_keys
         self.connection = None
         self.channel = None
@@ -135,7 +144,7 @@ class RabbitMQConsumer:
 
         for routing_key in self.routing_keys:
 
-            queue_name = f"routings.{routing_key}.events"
+            queue_name = f"{self.name}.queue.{routing_key}.events"
 
             self.channel.queue_declare(
                 queue=queue_name,

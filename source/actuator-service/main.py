@@ -20,7 +20,7 @@ consumer = None
 
 def run_consumer() -> None:
     global consumer
-    consumer = RabbitMQConsumer(RABBITMQ_EXCHANGE, [f"{RABBITMQ_ACTUATOR_ROUTING_KEY}"], handle_actuator_event)
+    consumer = RabbitMQConsumer("actuator",RABBITMQ_EXCHANGE, [f"{RABBITMQ_ACTUATOR_ROUTING_KEY}"], handle_actuator_event)
     consumer.connect()
     run_in_threadpool(consumer.start_consuming())
     print("Consumer started")
