@@ -10,7 +10,6 @@ from fastapi.concurrency import run_in_threadpool
 
 from app.common.rabbitmq_config import RabbitMQConsumer
 
-from fastapi.middleware.cors import CORSMiddleware
 
 logging.basicConfig(
     level=logging.INFO,
@@ -40,13 +39,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Actuator Service", version="0.1.0", lifespan=lifespan)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+
 
 @app.get("/health")
 async def health() -> dict:

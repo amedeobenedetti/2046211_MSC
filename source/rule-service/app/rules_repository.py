@@ -7,8 +7,13 @@ from app.rule_models import Rule
 class RulesRepository:
     def get_rules(self) -> list[Rule]:
         with SessionLocal() as session:
-            stmt = select(Rule)
+            stmt = select(Rule).order_by(Rule.id)
             return list(session.execute(stmt).scalars().all())
+        
+    def get_rule_from_id(self, id) -> Rule:
+        with SessionLocal() as session:
+            stmt = (select(Rule).where(Rule.id == id))
+            return session.execute(stmt).scalar_one_or_none()
 
     def get_rules_for_sensor(self, sensor_name: str) -> list[Rule]:
         with SessionLocal() as session:

@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Mars Habitat Control Panel</title>
-<link rel="stylesheet" href="static/css/style.css">
+<link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
 </head>
 
 <body>
@@ -14,8 +14,8 @@
 <p>Real-time habitat monitoring</p>
 
 <nav>
-<a href="index.html">Dashboard</a>
-<a href="rules.html">Automation Rules</a>
+<a href="/">Dashboard</a>
+<a href="/rules">Automation Rules</a>
 </nav>
 
 </header>
@@ -34,7 +34,7 @@
 
 </section>
 
-<script type="module" src="static/js/dashboard.js"></script>
+<script type="module" src="{{ url_for('static', path='js/dashboard.js') }}"></script>
 
 </body>
 </html>

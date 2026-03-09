@@ -3,7 +3,8 @@ from contextlib import asynccontextmanager
 from app.common.rabbitmq_config import (
     RABBITMQ_EXCHANGE,
     RABBITMQ_REST_SENSORS_ROUTING_KEY,
-    SIMULATOR_BASE_URL
+    SIMULATOR_BASE_URL,
+    RULES_ENGINE_URL
 )
 from app.handlers import (
     handle_measurement_event, 
@@ -20,7 +21,7 @@ from fastapi.concurrency import run_in_threadpool
 
 from app.common.rabbitmq_config import RabbitMQConsumer
 from fastapi.middleware.cors import CORSMiddleware
-from app.simulator_client import SimulatorClient
+from app.simulator_client import HTTPxClient
 
 logging.basicConfig(
     level=logging.INFO,
@@ -63,7 +64,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-simulator = SimulatorClient(SIMULATOR_BASE_URL)
+web_client = HTTPxClient(SIMULATOR_BASE_URL)
 
 @app.get("/health")
 async def health() -> dict:
@@ -91,7 +92,7 @@ async def get_state_from_name(source_name: str) -> dict:
 @app.get("/sensors")
 def get_sensors_list():
     """Returns the list of sensors"""
-    return simulator.get_sensors_list()
+    return web_client.get_sensors_list()
     
 
 # Telemetry Endpoints
@@ -102,7 +103,7 @@ def get_sensors_list():
 @app.get("/actuators")
 def get_actuators_list():
     """Returns the list of actuators"""
-    return simulator.get_actuators_list()
+    return web_client.get_actuators_list()
 
 @app.post("/actuators/{actuator_name}")
 async def send_command(actuator_name: str, command: str = Body(..., embed=True)):
@@ -116,6 +117,7 @@ def get_rules_list():
     """
     Returns the list of rules
     """
+    return web_client.request_url(f"{RULES_ENGINE_URL}/rules", "GET")
     pass
 
 @app.post("/rules/{rule_id}")

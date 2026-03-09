@@ -1,6 +1,4 @@
 const DASHBOARD_API = "http://localhost:8003"
-const ACTUATOR_API = "http://localhost:8004"
-const RULE_API = "http://localhost:8001"
 
 
 export async function getState() {
@@ -9,13 +7,13 @@ export async function getState() {
 }
 
 export async function getActuators() {
-    const res = await fetch(ACTUATOR_API + "/actuators")
+    const res = await fetch(DASHBOARD_API + "/actuators")
     return await res.json()
 }
 
 export async function setActuator(name, command) {
 
-    await fetch(ACTUATOR_API + "/actuators/" + name, {
+    await fetch(DASHBOARD_API + "/actuators/" + name, {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -27,6 +25,36 @@ export async function setActuator(name, command) {
 }
 
 export async function getRules() {
-    const res = await fetch(RULE_API + "/rules")
+    const res = await fetch(DASHBOARD_API + "/rules")
     return await res.json()
+}
+
+export async function createRule(rule) {
+    await fetch(DASHBOARD_API + "/rule", {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            rule: rule
+        })
+    })
+}
+
+export async function updateRule(rule) {
+    await fetch(DASHBOARD_API + "/rules/" + rule.id, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            rule: rule
+        })
+    })
+}
+
+export async function deleteRule(ruleId) {
+    await fetch(DASHBOARD_API + "/rules/" + ruleId, {
+        method: "DELETE"
+    })
 }

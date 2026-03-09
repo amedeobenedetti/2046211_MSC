@@ -68,19 +68,29 @@ def handle_rules_event(event: UnifiedEvent) -> None:
     if r_event.operation == "add":
         pass
     if r_event.operation == "update":
-        r_list = rules_repository.get_rules()
-        for rule in r_list:
-            if rule.id == r_event.rule_id:
-                rule.name = r_event.rule_name if r_event.rule_name is not None else rule.name
-                rule.rule_enabled = r_event.rule_enabled if r_event.rule_enabled is not None else rule.rule_enabled
-                rule.sensor_name = r_event.sensor_name if r_event.sensor_name is not None else rule.sensor_name
-                rule.metric_name = r_event.metric_name if r_event.metric_name is not None else rule.metric_name
-                rule.actuator_name = r_event.actuator_name if r_event.actuator_name is not None else rule.actuator_name
-                rule.target_state = r_event.target_state if r_event.target_state is not None else rule.target_state
-                rule.operator = r_event.operator if r_event.operator is not None else rule.operator
-                rule.threshold_value = r_event.threshold_value if r_event.threshold_value is not None else rule.threshold_value
-                rule.unit = r_event.unit if r_event.unit is not None else rule.unit
-                rules_repository.update_rule(rule)
+        logger.info("Detected update operation on rule_id=%s", str(r_event.rule_id))
+        old_rule = rules_repository.get_rule_from_id(r_event.rule_id)
+        if old_rule is None:
+            logger.warning("Rule not found: rule_id=%s", str(r_event.rule_id))
+            return
+        
+        new_rule = old_rule
+        new_rule.name = r_event.rule_name if r_event.rule_name is not None else new_rule.name
+        new_rule.rule_enabled = r_event.rule_enabled if r_event.rule_enabled is not None else new_rule.rule_enabled
+        new_rule.sensor_name = r_event.sensor_name if r_event.sensor_name is not None else new_rule.sensor_name
+        new_rule.metric_name = r_event.metric_name if r_event.metric_name is not None else new_rule.metric_name
+        new_rule.actuator_name = r_event.actuator_name if r_event.actuator_name is not None else new_rule.actuator_name
+        new_rule.target_state = r_event.target_state if r_event.target_state is not None else new_rule.target_state
+        new_rule.operator = r_event.operator if r_event.operator is not None else new_rule.operator
+        new_rule.threshold_value = r_event.threshold_value if r_event.threshold_value is not None else new_rule.threshold_value
+        new_rule.unit = r_event.unit if r_event.unit is not None else new_rule.unit
+        try:
+            rules_repository.update_rule(new_rule)
+        except:
+            logger.warning("Update failed on rule_id=%s", str(r_event.rule_id))
+            return
+        logger.info("Update successful on rule_id=%s", str(r_event.rule_id))
+        
 
     if r_event.operation == "delete":
         pass

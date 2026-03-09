@@ -66,30 +66,39 @@ async function loadSensors() {
 
 async function loadActuators() {
 
-    const actuators = await getActuators()
+    const response = await getActuators()
+    const actuators = response.actuators
 
     const grid = document.getElementById("actuatorGrid")
     grid.innerHTML = ""
-
-    actuators.forEach(act => {
+    
+    Object.entries(actuators).forEach(([name, state]) => {
 
         const card = document.createElement("div")
         card.className = "actuator-card"
 
-        const button = document.createElement("button")
-        button.textContent = act.state
+        const label = document.createElement("label")
+        label.className = "switch"
 
-        button.onclick = async () => {
+        const input = document.createElement("input")
+        input.type = "checkbox"
+        input.checked = state === "ON"
 
-            const newState = act.state === "ON" ? "OFF" : "ON"
-
-            await setActuator(act.name, newState)
-
-            loadActuators()
+        input.onchange = async () => {
+            const newState = input.checked ? "ON" : "OFF"
+            await setActuator(name, newState)
+            
+            setTimeout(await loadActuators(), 5000)
         }
 
-        card.innerHTML = `<div>${act.name}</div>`
-        card.appendChild(button)
+        const slider = document.createElement("span")
+        slider.className = "slider"
+
+        label.appendChild(input)
+        label.appendChild(slider)
+
+        card.innerHTML = `<div>${name}</div>`
+        card.appendChild(label)
 
         grid.appendChild(card)
 

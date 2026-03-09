@@ -7,6 +7,8 @@ logger = logging.getLogger(__name__)
 
 
 SIMULATOR_BASE_URL = os.getenv("SIMULATOR_BASE_URL", "http://mars-simulator:8080")
+RULES_ENGINE_URL = os.getenv("RULES_ENGINE_URL", "http://mars-rule-service:8001")
+
 
 RABBITMQ_HOST = os.getenv("RABBITMQ_HOST", "rabbitmq")
 RABBITMQ_PORT = int(os.getenv("RABBITMQ_PORT", "5672"))
