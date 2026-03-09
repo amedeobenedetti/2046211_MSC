@@ -173,3 +173,16 @@ background-color: #22c55e;
 input:checked + .slider:before {
 transform: translateX(26px);
 }
+
+#notificationContainer {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+}
+
+.notification {
+    background: #ffcc00;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+}

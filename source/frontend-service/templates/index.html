@@ -30,9 +30,17 @@
             <h2>Actuators</h2>
             <div id="actuatorGrid"></div>
         </section>
+
+        <section>
+            <h2>Telemetry</h2>
+            <div id="telemetryGrid"></div>
+        </section>
     </div>
 
-<script type="module" src="{{ url_for('static', path='js/dashboard.js') }}"></script>
+    <div id="notificationContainer"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script type="module" src="{{ url_for('static', path='js/dashboard.js') }}"></script>
 
 </body>
 </html>
