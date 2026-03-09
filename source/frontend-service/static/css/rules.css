@@ -6,17 +6,51 @@ margin: 0;
 padding: 0;
 }
 
+.header-container,
 .page-container {
 width: 90%;
 max-width: 1200px;
 margin: auto;
+}
+
+.page-container {
 padding-bottom: 60px;
 }
 
+header {
+background: #020617;
+border-bottom: 1px solid #1e293b;
+padding: 30px 0;
+text-align: center;
+}
+
 h1 {
-margin-top: 40px;
+margin: 0;
 font-size: 32px;
 letter-spacing: 1px;
+}
+
+.navbar {
+margin-top: 20px;
+}
+
+.navbar a {
+color: #cbd5f5;
+text-decoration: none;
+margin: 0 8px;
+padding: 6px 12px;
+border: 1px solid #334155;
+border-radius: 5px;
+background: #1e293b;
+}
+
+.navbar a:hover {
+background: #334155;
+}
+
+.navbar a.active {
+background: #334155;
+border-color: #475569;
 }
 
 h2 {

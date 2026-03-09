@@ -186,3 +186,35 @@ transform: translateX(26px);
     margin-bottom: 10px;
     border-radius: 5px;
 }
+
+#telemetryGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 20px;
+    margin-top: 10px;
+}
+
+.telemetry-card {
+
+    background: #1b1f2a;
+    border-radius: 10px;
+    padding: 15px;
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    transition: transform 0.15s ease;
+}
+
+.telemetry-card:hover {
+    transform: translateY(-2px);
+}
+
+.telemetry-card h3 {
+    margin: 0 0 10px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #e6e6e6;
+}
+
+.telemetry-card canvas {
+    max-height: 220px;
+}
