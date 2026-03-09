@@ -16,8 +16,9 @@ The platform also provides a real-time dashboard that allows users to:
 * monitor sensor values
 * observe actuator states
 * create and manage automation rules
+* manually control actuators
 
-The system is implemented as a distributed event-driven architecture composed of multiple services communicating through a message broker.
+The system is implemented as a distributed event-driven architecture composed of multiple microservices communicating through RabbitMQ and using PostgreSQL for persistent rule storage.
 
 # USER STORIES
 
@@ -142,7 +143,7 @@ Rules are evaluated whenever a new event is received. The automation engine perf
 
 4) Evaluate the rule condition using the specified operator.
 
-5) If the condition is satisfied, trigger the actuator via the simulator API.
+5) If the condition is satisfied, emit an actuator command that will be executed by the actuator service through the simulator API.
 
 Rules follow the structure:
 

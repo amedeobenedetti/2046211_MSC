@@ -1,23 +1,20 @@
 # SYSTEM OVERVIEW
-
 The Mars Habitat Automation Platform is a distributed system designed to monitor and control a simulated Mars habitat environment.
-
 The system collects data from heterogeneous IoT devices provided by a simulator. These devices expose data through two mechanisms:
 
 * REST sensors that must be periodically polled
 * Telemetry streams that publish events asynchronously
 
 Incoming data is normalized into a unified internal event format and distributed through a message broker to the internal services.
-
 The system processes sensor data in real time and evaluates automation rules defined by the user. When a rule condition is satisfied, the system triggers the corresponding actuator through the simulator API.
-
 The platform also provides a real-time dashboard that allows users to:
 
 * monitor sensor values
 * observe actuator states
 * create and manage automation rules
+* manually control actuators
 
-The system is implemented as a distributed event-driven architecture composed of multiple services communicating through a message broker.
+The system is implemented as a distributed event-driven architecture composed of multiple microservices communicating through RabbitMQ and using PostgreSQL for persistent rule storage.
 
 # USER STORIES
 
@@ -118,7 +115,7 @@ RabbitMQ acts as the message broker used for asynchronous communication between 
 15672:15672
 
 ### DESCRIPTION:
-RabbitMQ receives normalized sensor events from the ingestion service and distributes them to subscribed services such as the processing service.
+RabbitMQ receives normalized sensor events from the ingestion service and distributes them to subscribed services such as the rule-service, dashboard-service, and actuator-service.
 
 ### PERSISTENCE EVALUATION
 In the current configuration, messages are transient and not persisted.
@@ -169,14 +166,12 @@ The service is implemented in Python and uses Pydantic models to represent norma
 The service periodically polls sensors from the simulator, converts the payloads into UnifiedEvent objects, and publishes them to the RabbitMQ exchange.
 
 
-## CONTAINER_NAME: mars-processing-service
+## CONTAINER_NAME: mars-rule-service
 
 ### DESCRIPTION:
-The processing service consumes normalized sensor events and evaluates automation rules.
+The rule service is responsible for evaluating automation rules based on incoming sensor events.
 
 ### USER STORIES:
-8) As a user, I want to manually toggle an actuator so that I can directly control habitat systems when needed.
-
 9) As a user, I want to create automation rules so that the system can react automatically to sensor conditions.
 
 10) As a user, I want to view all existing automation rules so that I can understand the current automation logic.
@@ -195,24 +190,76 @@ The processing service consumes normalized sensor events and evaluates automatio
 8001:8001
 
 ### PERSISTENCE EVALUATION
-The service reads and manages automation rules stored in the PostgreSQL database.
+The service retrieves automation rules from the PostgreSQL database.
 
 ### EXTERNAL SERVICES CONNECTIONS
 - RabbitMQ
-- Mars Simulator (actuator API)
-- PostgreSQL database
+- PostgreSQL
+- Actuator Service
 
 ### MICROSERVICES:
 
-#### MICROSERVICE: processing-service
+#### MICROSERVICE: rule-service
 - TYPE: backend
-- DESCRIPTION: Consumes sensor events from RabbitMQ and evaluates automation rules.
+- DESCRIPTION: Consumes sensor events and evaluates automation rules stored in the database.
 - PORTS: 8001
 - TECHNOLOGICAL SPECIFICATION:
-Implemented in Python using an event-driven architecture and rule evaluation logic.
+Implemented in Python using an event-driven architecture.
 - SERVICE ARCHITECTURE:
-When a new event arrives, the service extracts measurements and checks whether any automation rule conditions are satisfied. If a condition is met, the service triggers the corresponding actuator through the simulator API.
+When a new sensor event arrives, the service checks whether any rule conditions are satisfied and emits actuator commands if necessary.
 
+## CONTAINER_NAME: mars-dashboard-service
+
+### DESCRIPTION:
+The dashboard service aggregates sensor data and provides real-time information used by the user interface.
+
+### USER STORIES:
+1) As a user, I want to see the latest value of all sensors so that I can monitor the habitat environment.
+
+2) As a user, I want to receive real-time updates from sensors so that I can react quickly to environmental changes.
+
+3) As a user, I want to visualize sensor data on a dashboard so that I can easily understand the state of the habitat.
+
+16) As a user, I want the dashboard to update automatically when new sensor data arrives so that the displayed information is always up to date.
+
+17) As a user, I want to identify which sensor generated an event so that I can trace the origin of the data.
+
+18) As a user, I want to see sensor values with their measurement units so that the information is clear and understandable.
+
+### PORTS:
+8003:8003
+
+### PERSISTENCE EVALUATION
+The service does not persist data. It consumes real-time events from RabbitMQ.
+
+### EXTERNAL SERVICES CONNECTIONS
+- RabbitMQ
+- Frontend Service
+
+## CONTAINER_NAME: mars-actuator-service
+
+### DESCRIPTION:
+The actuator service is responsible for interacting with the Mars simulator to control actuators.
+
+### USER STORIES:
+6) As a user, I want to see the list of available actuators so that I know which systems can be controlled.
+
+7) As a user, I want to see the current state of each actuator so that I know which systems are currently active.
+
+8) As a user, I want to manually toggle an actuator so that I can directly control habitat systems when needed.
+
+14) As a user, I want the system to automatically trigger actuators when rule conditions are satisfied so that the habitat environment stays safe.
+
+### PORTS:
+8004:8004
+
+### PERSISTENCE EVALUATION
+This service does not persist data.
+
+### EXTERNAL SERVICES CONNECTIONS
+- Mars Simulator API
+- RabbitMQ
+- Rule Service
 
 ## CONTAINER_NAME: mars-db
 
@@ -253,3 +300,26 @@ The database stores rule records containing sensor conditions and actuator actio
 - DB STRUCTURE:
 
 **rules** : | **id** | sensor_name | metric_name | operator | threshold | actuator_name | target_state |
+
+## CONTAINER_NAME: mars-frontend-service
+
+### DESCRIPTION:
+The frontend service provides the graphical user interface used to interact with the system.
+
+### USER STORIES:
+3) As a user, I want to visualize sensor data on a dashboard so that I can easily understand the state of the habitat.
+
+8) As a user, I want to manually toggle an actuator so that I can directly control habitat systems when needed.
+
+9) As a user, I want to create automation rules so that the system can react automatically to sensor conditions.
+
+10) As a user, I want to view all existing automation rules so that I can understand the current automation logic.
+
+### PORTS:
+8002:8002
+
+### PERSISTENCE EVALUATION
+The frontend does not store data locally.
+
+### EXTERNAL SERVICES CONNECTIONS
+- Dashboard Service
