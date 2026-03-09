@@ -1,0 +1,169 @@
+/* BASE */
+
+body {
+font-family: "Segoe UI", Arial, sans-serif;
+background: linear-gradient(180deg,#020617,#0f172a);
+color: white;
+margin: 0;
+padding: 0;
+}
+
+/* CONTAINER */
+
+.page-container {
+width: 90%;
+max-width: 1200px;
+margin: auto;
+padding-bottom: 60px;
+}
+
+/* TITOLI */
+
+h1 {
+margin-top: 40px;
+font-size: 32px;
+letter-spacing: 1px;
+}
+
+h2 {
+margin-top: 40px;
+border-left: 4px solid #22c55e;
+padding-left: 10px;
+font-weight: 600;
+}
+
+/* FORM CARD */
+
+.sensor-card {
+background: #1e293b;
+padding: 26px;
+border-radius: 12px;
+box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+margin-top: 20px;
+
+display: grid;
+grid-template-columns: repeat(auto-fill,minmax(180px,1fr));
+gap: 14px;
+align-items: center;
+}
+
+/* INPUT */
+
+.sensor-card input,
+.sensor-card select {
+padding: 10px;
+border-radius: 6px;
+border: 1px solid #334155;
+background: #020617;
+color: white;
+font-size: 14px;
+outline: none;
+transition: border 0.2s, box-shadow 0.2s;
+}
+
+.sensor-card input::placeholder {
+color: #64748b;
+}
+
+.sensor-card input:focus,
+.sensor-card select:focus {
+border-color: #22c55e;
+box-shadow: 0 0 0 1px #22c55e;
+}
+
+/* BUTTON */
+
+.sensor-card button {
+padding: 11px 16px;
+border: none;
+border-radius: 6px;
+background: #22c55e;
+color: white;
+font-weight: 600;
+cursor: pointer;
+transition: background 0.2s, transform 0.15s;
+}
+
+.sensor-card button:hover {
+background: #16a34a;
+transform: translateY(-1px);
+}
+
+/* GRID RULES */
+
+.grid-container {
+display: grid;
+grid-template-columns: repeat(auto-fill, minmax(280px,1fr));
+gap: 20px;
+margin-top: 20px;
+}
+
+/* RULE CARD */
+
+.rule-card {
+background: #1e293b;
+border-radius: 12px;
+padding: 20px;
+box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+transition: transform 0.2s;
+position: relative;
+}
+
+.rule-card:hover {
+transform: translateY(-4px);
+}
+
+/* RULE TITLE */
+
+.rule-title {
+font-size: 18px;
+font-weight: 600;
+margin-bottom: 10px;
+color: #cbd5f5;
+}
+
+/* RULE TEXT */
+
+.rule-condition {
+font-size: 14px;
+color: #94a3b8;
+line-height: 1.5;
+margin-bottom: 12px;
+}
+
+/* RULE ACTION */
+
+.rule-action {
+font-size: 14px;
+font-weight: 600;
+color: #22c55e;
+}
+
+/* DELETE BUTTON */
+
+.rule-delete {
+position: absolute;
+top: 10px;
+right: 10px;
+background: #334155;
+border: none;
+color: #cbd5f5;
+border-radius: 6px;
+padding: 5px 9px;
+cursor: pointer;
+font-size: 12px;
+transition: background 0.2s;
+}
+
+.rule-delete:hover {
+background: #ef4444;
+color: white;
+}
+
+/* EMPTY STATE */
+
+.empty-state {
+color: #64748b;
+margin-top: 20px;
+font-style: italic;
+}
