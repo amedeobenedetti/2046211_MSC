@@ -66,7 +66,15 @@ def handle_rules_event(event: UnifiedEvent) -> None:
         rules_repository.set_rule_state(r_event.rule_id, r_event.rule_enabled)
 
     if r_event.operation == "add":
-        pass
+        logger.info("Detected add operation")
+        print(r_event.model_dump(), flush=True)
+        try:
+            r_event.rule_id = rules_repository.add_rule(r_event)
+            logger.info("Successful add operation, new_rule_id=%s", str(r_event.rule_id))
+        except Exception as e:
+            logger.warning("Add failed on event_id=%s\n exception: %s", str(r_event.event_id), str(e))
+            return
+    
     if r_event.operation == "update":
         logger.info("Detected update operation on rule_id=%s", str(r_event.rule_id))
         old_rule = rules_repository.get_rule_from_id(r_event.rule_id)
@@ -93,6 +101,14 @@ def handle_rules_event(event: UnifiedEvent) -> None:
         
 
     if r_event.operation == "delete":
+        logger.info("Detected delete operation on rule_id=%s", str(r_event.rule_id))
+        try:
+            rules_repository.delete_rule(r_event.rule_id)
+            logger.info("Delete successful on rule_id=%s", str(r_event.rule_id))
+        except Exception as e:
+            logger.warning("Delete failed event_id=%s\n rule_id=%s\n exception: %s",str(r_event.event_id), str(r_event.rule_id), str(e))
+            return
+        
         pass
 
     

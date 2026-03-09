@@ -83,9 +83,14 @@ def set_rule_state(rule_id: int, new_state: bool) -> None:
     logger.info("Setting rule state: rule_id=%d new_state=%s", rule_id, new_state)
 
 def add_rule(rule: dict) -> None:
+    rule = rule.get("rule", None) if rule.get("rule", None) is not None else rule
+    rule["rule_name"] = rule.get("name", "new_rule")
+    rule["rule_enabled"] = rule.get("enabled", True)
+
     r_event = RuleEvent(
         event_id=str(uuid4()),
         operation="add",
+        **rule
     )
 
     new_event = UnifiedEvent(
@@ -97,7 +102,8 @@ def add_rule(rule: dict) -> None:
             RABBITMQ_RULES_ROUTING_KEY,
             new_event.model_dump(mode="json"),
         )
-    pass
+    return {"status": "ok", "rule": rule, "event_rule": r_event.model_dump_json()}
+
 
 def update_rule(rule: dict) -> dict:
 
@@ -137,4 +143,6 @@ def delete_rule(rule_id: int) -> None:
             RABBITMQ_RULES_ROUTING_KEY,
             new_event.model_dump(mode="json"),
         )
-    pass
+    return {"status": "ok", 'rule_id': rule_id}
+
+    

@@ -3,7 +3,8 @@ from contextlib import asynccontextmanager
 from app.common.rabbitmq_config import (
     RABBITMQ_EXCHANGE,
     RABBITMQ_REST_SENSORS_ROUTING_KEY,
-    RABBITMQ_RULES_ROUTING_KEY
+    RABBITMQ_RULES_ROUTING_KEY,
+    RABBITMQ_TELEMETRY_SENSORS_ROUTING_KEY
 )
 from app.handlers import handle_measurement_event, handle_rules_event
 from fastapi import FastAPI, HTTPException
@@ -18,16 +19,16 @@ logging.basicConfig(
 )
 
 
-rest_consumer = None
+sensors_consumer = None
 rules_consumer = None
 
 
-def run_rest_sensors_consumer() -> None:
-    global rest_consumer
-    rest_consumer = RabbitMQConsumer("rules",RABBITMQ_EXCHANGE, [f"{RABBITMQ_REST_SENSORS_ROUTING_KEY}.#"], handle_measurement_event)
-    rest_consumer.connect()
-    run_in_threadpool(rest_consumer.start_consuming())
-    print("Rest Sensor Consumer started")
+def run_sensors_consumer() -> None:
+    global sensors_consumer
+    sensors_consumer = RabbitMQConsumer("rules",RABBITMQ_EXCHANGE, [f"{RABBITMQ_REST_SENSORS_ROUTING_KEY}.#", f"{RABBITMQ_TELEMETRY_SENSORS_ROUTING_KEY}.#"], handle_measurement_event)
+    sensors_consumer.connect()
+    run_in_threadpool(sensors_consumer.start_consuming())
+    print("Sensors Consumer started")
 
 def run_rules_consumer() -> None:
     global rules_consumer
@@ -41,7 +42,7 @@ import threading
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    thread = threading.Thread(target=run_rest_sensors_consumer, daemon=True)
+    thread = threading.Thread(target=run_sensors_consumer, daemon=True)
     thread.start()
     thread2 = threading.Thread(target=run_rules_consumer, daemon=True)
     thread2.start()

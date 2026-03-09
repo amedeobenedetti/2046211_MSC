@@ -11,6 +11,8 @@ class StateStore:
         self._state: dict[str, dict[str, Any]] = {}
 
     def update_event(self, event: MeasurementEvent) -> None:
+        event.source_name = event.source_name[event.source_name.rfind("/") + 1 :] if event.source_name.startswith("mars") else event.source_name
+
         with self._lock:
             self._state[event.source_name] = {
                 "event_id": event.event_id,

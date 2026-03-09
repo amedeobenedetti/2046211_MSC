@@ -3,6 +3,7 @@ import logging
 
 from fastapi import FastAPI
 from app.poller import polling_loop
+from app.telemetry_listener import telemetry_listener
 
 logging.basicConfig(
     level=logging.INFO,
@@ -20,3 +21,4 @@ async def health() -> dict:
 @app.on_event("startup")
 def startup_event() -> None:
     asyncio.create_task(polling_loop())
+    asyncio.create_task(telemetry_listener())

@@ -10,15 +10,18 @@
 <body>
 
 <header>
-<h1>Mars Habitat Control Panel</h1>
-<p>Real-time habitat monitoring</p>
 
-<nav>
+<h1>Mars Habitat Control Panel</h1>
+<p class="subtitle">Real-time habitat monitoring</p>
+
+<nav class="navbar">
 <a href="/">Dashboard</a>
 <a href="/rules">Automation Rules</a>
 </nav>
 
 </header>
+
+<div class="container">
 
 <section>
 
@@ -33,6 +36,8 @@
 <div id="actuatorGrid"></div>
 
 </section>
+
+</div>
 
 <script type="module" src="{{ url_for('static', path='js/dashboard.js') }}"></script>
 

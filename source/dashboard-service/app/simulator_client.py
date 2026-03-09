@@ -14,6 +14,15 @@ class HTTPxClient:
             response.raise_for_status()
         
         return response.json()
+
+    def get_telemetries_list(self) -> dict:
+        url = f"{self.base_url}/api/telemetry/topics"
+
+        with httpx.Client(timeout=10.0) as client:
+            response = client.get(url)
+            response.raise_for_status()
+        
+        return response.json()
     
     def get_actuators_list(self) -> dict:
         url = f"{self.base_url}/api/actuators"

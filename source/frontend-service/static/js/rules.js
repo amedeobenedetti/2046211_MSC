@@ -17,6 +17,7 @@ async function loadRules() {
         const id = "rule" + r.id
 
         form.innerHTML = `
+            <input id="${id}name" value="${r.name}">
             IF
             <input id="${id}sensor_name" value="${r.sensor_name}">
             <input id="${id}metric_name" value="${r.metric_name}">
@@ -43,7 +44,7 @@ async function loadRules() {
 
             const rule = {
                 id: r.id,
-                name: r.name,
+                name: document.getElementById(id + "name").value,
                 sensor_name: document.getElementById(id + "sensor_name").value,
                 metric_name: document.getElementById(id + "metric_name").value,
                 operator: document.getElementById(id + "operator").value,
@@ -75,6 +76,7 @@ document.getElementById("ruleForm").onsubmit = async (e) => {
     e.preventDefault()
 
     const rule = {
+        name: document.getElementById("name").value,
         sensor_name: document.getElementById("sensor").value,
         metric_name: document.getElementById("metric").value,
         operator: document.getElementById("operator").value,
@@ -85,7 +87,9 @@ document.getElementById("ruleForm").onsubmit = async (e) => {
 
     await createRule(rule)
 
-    loadRules()
+    sleep(3000).then(() => {
+        loadRules()
+    })
 }
 
 loadRules()

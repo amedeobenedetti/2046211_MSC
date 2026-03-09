@@ -4,7 +4,8 @@ from app.common.rabbitmq_config import (
     RABBITMQ_EXCHANGE,
     RABBITMQ_REST_SENSORS_ROUTING_KEY,
     SIMULATOR_BASE_URL,
-    RULES_ENGINE_URL
+    RULES_ENGINE_URL,
+    RABBITMQ_TELEMETRY_SENSORS_ROUTING_KEY
 )
 from app.handlers import (
     handle_measurement_event, 
@@ -33,7 +34,7 @@ consumer = None
 
 def run_consumer() -> None:
     global consumer
-    consumer = RabbitMQConsumer("dashboard",RABBITMQ_EXCHANGE, [f"{RABBITMQ_REST_SENSORS_ROUTING_KEY}.#"], handle_measurement_event)
+    consumer = RabbitMQConsumer("dashboard",RABBITMQ_EXCHANGE, [f"{RABBITMQ_REST_SENSORS_ROUTING_KEY}.#", f"{RABBITMQ_TELEMETRY_SENSORS_ROUTING_KEY}.#"], handle_measurement_event)
     consumer.connect()
     run_in_threadpool(consumer.start_consuming())
     print("Consumer started")
@@ -72,12 +73,12 @@ async def health() -> dict:
     return {"status": "ok"}
 
 
-# Sensor Endpoints
 @app.get("/state")
 async def get_state_s() -> dict:
-    """Returns the current sensors-state of the system"""
+    """Returns the current state of the system"""
     return await run_in_threadpool(get_state)
 
+# Sensor Endpoints
 @app.get("/sensors/{source_name}")
 async def get_state_from_name(source_name: str) -> dict:
     """Returns the current state of a specific sensor by its name"""
@@ -96,8 +97,21 @@ def get_sensors_list():
     
 
 # Telemetry Endpoints
-# TODO: Implement telemetry endpoints
+@app.get("/telemetries/{source_name}")
+async def get_telemetry_from_name(source_name: str) -> dict:
+    """Returns the telemetry data of a specific sensor by its name"""
+    def get_telemetry(source_name:str):
+        state = get_state_by_source(source_name)
 
+        if state is None:
+            raise HTTPException(status_code=404, detail="Source not found")
+        return state
+    return await run_in_threadpool(get_telemetry, source_name)
+
+@app.get("/telemetries")
+def get_telemetries_list():
+    """Returns the list of telemetries"""
+    return web_client.get_telemetries_list()
 
 # Actuator Endpoints
 @app.get("/actuators")
@@ -117,8 +131,10 @@ def get_rules_list():
     """
     Returns the list of rules
     """
-    return web_client.request_url(f"{RULES_ENGINE_URL}/rules", "GET")
-    pass
+    try:
+        return web_client.request_url(f"{RULES_ENGINE_URL}/rules", "GET")
+    except:
+        raise HTTPException(408, 'Rules engine not available')
 
 @app.post("/rules/{rule_id}")
 async def set_rule(rule_id: int, state: bool = Body(..., embed=True)):
@@ -126,18 +142,19 @@ async def set_rule(rule_id: int, state: bool = Body(..., embed=True)):
     return await run_in_threadpool(set_rule_state, rule_id, state)
 
 @app.delete("/rules/{rule_id}")
-def delete_delete_rule(rule_id: int):
+async def delete_delete_rule(rule_id: int):
     """
     Delete a rule
     """
-    pass
+    return await run_in_threadpool(delete_rule, rule_id)
+
 
 @app.put("/rule")
-def create_rule(rule: dict):
+async def create_rule(rule: dict):
     """
     Create a new rule
     """
-    pass
+    return await run_in_threadpool(add_rule, rule)
 
 @app.put("/rules/{rule_id}")
 async def put_update_rule(rule_id: int, rule: dict = Body(..., embed=True)):

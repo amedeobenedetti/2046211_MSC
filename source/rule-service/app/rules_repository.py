@@ -1,5 +1,6 @@
-from sqlalchemy import select, update
+from sqlalchemy import select, update, insert, delete
 
+from app.common.models import RuleEvent
 from app.db import SessionLocal
 from app.rule_models import Rule
 
@@ -61,4 +62,34 @@ class RulesRepository:
             session.execute(stmt)
             session.commit()
     
+    def add_rule(self, new_rule: RuleEvent) -> None:
+        with SessionLocal() as session:
+            stmt = (
+                insert(Rule)
+                .values(
+                    name=new_rule.rule_name,
+                    sensor_name=new_rule.sensor_name,
+                    metric_name=new_rule.metric_name,
+                    operator=new_rule.operator,
+                    threshold_value=new_rule.threshold_value,
+                    unit=new_rule.unit,
+                    actuator_name=new_rule.actuator_name,
+                    target_state=new_rule.target_state,
+                    rule_enabled=new_rule.rule_enabled,
+                )
+            ).returning(Rule.id)
+            result = session.execute(stmt)
+            session.commit()
+            return result.scalar_one()
+
+    def delete_rule(self, rule_id: int) -> None:
+        with SessionLocal() as session:
+            stmt = (
+                delete(Rule)
+                .where(Rule.id == rule_id)
+            )
+            session.execute(stmt)
+            session.commit()
+            
+
     
