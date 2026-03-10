@@ -22,7 +22,7 @@ The system is implemented as a distributed event-driven architecture composed of
 
 # USER STORIES
 
-1) As a user, I want to see the latest value of all sensors so that I can monitor the habitat environment.
+1) As a user, I want to view the current state of all sensors so that I can monitor the habitat in real time.
 
 2) As a user, I want to receive real-time updates from sensors so that I can react quickly to environmental changes.
 
@@ -42,19 +42,19 @@ The system is implemented as a distributed event-driven architecture composed of
 
 10) As a user, I want to view all existing automation rules so that I can understand the current automation logic.
 
-11) As a user, I want to delete an automation rule so that I can remove behaviours that are no longer needed.
+11) As a user, I want to toggle automation rules so that I can disable or enable behiaviours when needed.
 
-12) As a user, I want to edit an existing automation rule so that I can adjust the system behaviour when conditions change.
+12) As a user, I want to delete an automation rule so that I can remove behaviours that are no longer needed.
 
-13) As a user, I want the system to evaluate rules whenever new sensor events arrive so that automation can happen in real time.
+13) As a user, I want to edit an existing automation rule so that I can adjust the system behaviour when conditions change.
 
-14) As a user, I want the system to automatically trigger actuators when rule conditions are satisfied so that the habitat environment stays safe.
+14) As a user, I want the system to evaluate rules whenever new sensor events arrive so that automation can happen in real time.
 
-15) As a user, I want to receive a notification when a rule is triggered so that I know when the system performs an automatic action.
+15) As a user, I want the system to automatically trigger actuators when rule conditions are satisfied so that the habitat environment stays safe.
 
-16) As a user, I want the dashboard to update automatically when new sensor data arrives so that the displayed information is always up to date.
+16) As a user, I want to receive a notification when a rule is triggered so that I know when the system performs an automatic action.
 
-17) As a user, I want to identify which sensor generated an event so that I can trace the origin of the data.
+17) As a user, I want the dashboard to update automatically when new sensor data arrives so that the displayed information is always up to date.
 
 18) As a user, I want to see sensor values with their measurement units so that the information is clear and understandable.
 
@@ -82,8 +82,6 @@ Runs the Mars IoT simulator. It simulates heterogeneous sensors, telemetry strea
 6) As a user, I want to see the list of available actuators so that I know which systems can be controlled.
 
 7) As a user, I want to see the current state of each actuator so that I know which systems are currently active.
-
-17) As a user, I want to identify which sensor generated an event so that I can trace the origin of the data.
 
 18) As a user, I want to see sensor values with their measurement units so that the information is clear and understandable.
 
@@ -115,9 +113,9 @@ Provides the asynchronous event bus used to decouple ingestion, rule evaluation,
 ### USER STORIES:
 2) As a user, I want to receive real-time updates from sensors so that I can react quickly to environmental changes.
 
-13) As a user, I want the system to evaluate rules whenever new sensor events arrive so that automation can happen in real time.
+14) As a user, I want the system to evaluate rules whenever new sensor events arrive so that automation can happen in real time.
 
-16) As a user, I want the dashboard to update automatically when new sensor data arrives so that the displayed information is always up to date.
+17) As a user, I want the dashboard to update automatically when new sensor data arrives so that the displayed information is always up to date.
 
 ### PORTS:
 5672:5672
@@ -151,8 +149,6 @@ Manages sensor acquisition from the Mars simulator, including periodic polling o
 4) As a user, I want to see the status of each sensor (ok or warning) so that I can quickly identify potential issues.
 
 5) As a user, I want to view the measurements associated with each sensor so that I can understand what metrics are being monitored.
-
-17) As a user, I want to identify which sensor generated an event so that I can trace the origin of the data.
 
 18) As a user, I want to see sensor values with their measurement units so that the information is clear and understandable.
 
@@ -210,15 +206,17 @@ Manages automation rules, including persistence, retrieval, evaluation against m
 
 10) As a user, I want to view all existing automation rules so that I can understand the current automation logic.
 
-11) As a user, I want to delete an automation rule so that I can remove behaviours that are no longer needed.
+11) As a user, I want to toggle automation rules so that I can disable or enable behiaviours when needed.
 
-12) As a user, I want to edit an existing automation rule so that I can adjust the system behaviour when conditions change.
+12) As a user, I want to delete an automation rule so that I can remove behaviours that are no longer needed.
 
-13) As a user, I want the system to evaluate rules whenever new sensor events arrive so that automation can happen in real time.
+13) As a user, I want to edit an existing automation rule so that I can adjust the system behaviour when conditions change.
 
-14) As a user, I want the system to automatically trigger actuators when rule conditions are satisfied so that the habitat environment stays safe.
+14) As a user, I want the system to evaluate rules whenever new sensor events arrive so that automation can happen in real time.
 
-15) As a user, I want to receive a notification when a rule is triggered so that I know when the system performs an automatic action.
+15) As a user, I want the system to automatically trigger actuators when rule conditions are satisfied so that the habitat environment stays safe.
+
+16) As a user, I want to receive a notification when a rule is triggered so that I know when the system performs an automatic action.
 
 ### PORTS:
 8001:8001
@@ -274,9 +272,7 @@ Provides the main application API for monitoring the habitat state, inspecting s
 
 3) As a user, I want to visualize sensor data on a dashboard so that I can easily understand the state of the habitat.
 
-16) As a user, I want the dashboard to update automatically when new sensor data arrives so that the displayed information is always up to date.
-
-17) As a user, I want to identify which sensor generated an event so that I can trace the origin of the data.
+17) As a user, I want the dashboard to update automatically when new sensor data arrives so that the displayed information is always up to date.
 
 18) As a user, I want to see sensor values with their measurement units so that the information is clear and understandable.
 
@@ -344,7 +340,7 @@ Consumes actuator events and executes the corresponding commands on the Mars sim
 
 8) As a user, I want to manually toggle an actuator so that I can directly control habitat systems when needed.
 
-14) As a user, I want the system to automatically trigger actuators when rule conditions are satisfied so that the habitat environment stays safe.
+15) As a user, I want the system to automatically trigger actuators when rule conditions are satisfied so that the habitat environment stays safe.
 
 ### PORTS:
 8004:8004
@@ -393,14 +389,16 @@ Provides persistent relational storage for the automation rules managed by the r
 
 10) As a user, I want to view all existing automation rules so that I can understand the current automation logic.
 
-11) As a user, I want to delete an automation rule so that I can remove behaviours that are no longer needed.
+11) As a user, I want to toggle automation rules so that I can disable or enable behiaviours when needed.
 
-12) As a user, I want to edit an existing automation rule so that I can adjust the system behaviour when conditions change.
+12) As a user, I want to delete an automation rule so that I can remove behaviours that are no longer needed.
+
+13) As a user, I want to edit an existing automation rule so that I can adjust the system behaviour when conditions change.
 
 20) As a user, I want the system to remain operational after a restart while keeping the automation rules so that automation continues to work.
 
 ### PORTS:
-5432:5432
+5433:5432
 
 ### DESCRIPTION:
 The postgres container is the relational database used by the platform to store automation rules. It is initialized through the SQL scripts contained in the project and mounted on a local volume so that rule data can survive container restarts and be reused by the Rule-Service.
@@ -447,6 +445,8 @@ Provides the web user interface for habitat monitoring, telemetry visualization,
 9) As a user, I want to create automation rules so that the system can react automatically to sensor conditions.
 
 10) As a user, I want to view all existing automation rules so that I can understand the current automation logic.
+
+11) As a user, I want to toggle automation rules so that I can disable or enable behiaviours when needed.
 
 ### PORTS:
 8002:8002

@@ -42,19 +42,19 @@ The system is implemented as a distributed event-driven architecture composed of
 
 10) As a user, I want to view all existing automation rules so that I can understand the current automation logic.
 
-11) As a user, I want to delete an automation rule so that I can remove behaviours that are no longer needed.
+11) As a user, I want to toggle automation rules so that I can disable or enable behiaviours when needed.
 
-12) As a user, I want to edit an existing automation rule so that I can adjust the system behaviour when conditions change.
+12) As a user, I want to delete an automation rule so that I can remove behaviours that are no longer needed.
 
-13) As a user, I want the system to evaluate rules whenever new sensor events arrive so that automation can happen in real time.
+13) As a user, I want to edit an existing automation rule so that I can adjust the system behaviour when conditions change.
 
-14) As a user, I want the system to automatically trigger actuators when rule conditions are satisfied so that the habitat environment stays safe.
+14) As a user, I want the system to evaluate rules whenever new sensor events arrive so that automation can happen in real time.
 
-15) As a user, I want to receive a notification when a rule is triggered so that I know when the system performs an automatic action.
+15) As a user, I want the system to automatically trigger actuators when rule conditions are satisfied so that the habitat environment stays safe.
 
-16) As a user, I want the dashboard to update automatically when new sensor data arrives so that the displayed information is always up to date.
+16) As a user, I want to receive a notification when a rule is triggered so that I know when the system performs an automatic action.
 
-17) As a user, I want to identify which sensor generated an event so that I can trace the origin of the data.
+17) As a user, I want the dashboard to update automatically when new sensor data arrives so that the displayed information is always up to date.
 
 18) As a user, I want to see sensor values with their measurement units so that the information is clear and understandable.
 
@@ -71,38 +71,36 @@ To handle heterogeneous device payloads, the platform converts all incoming data
 ```json
 {
   "event_id": "string",
-  "source_kind": "rest_sensor | telemetry_topic",
-  "source_name": "string",
-  "schema_family": "string",
-  "timestamp": "datetime",
-  "status": "ok | warning",
-  "measurements": [
-    {
-      "metric": "string",
-      "value": 0.0,
-      "unit": "string"
-    }
-  ]
+  "event_type": "measurement | actuator | rules",
+  "event_payload": Any
 }
 ```
 
 ### Field description
 
 * **event_id**: Unique identifier of the event
-* **source_kind**: Indicates whether the event originates from a REST sensor or a telemetry topic
-* **source_name**: Logical identifier of the sensor or telemetry topic
-* **schema_family**: Schema category describing the original device payload
-* **timestamp**: Time at which the measurement was generated
-* **status**: Status of the measurement provided by the simulator (`ok` or `warning`)
-* **measurements**: List of normalized measurements associated with the event
+* **event_type**: Type of the event (measurement, actuator, or rules)
+* **event_payload**: The actual data associated with the event
 
-## Measurement Structure
 
-Each event contains metadata about the source device and a list of measurements associated with the event. Each measurement contains:
+## Measurement Event Structure
+
+Each event of type "measurement" contains metadata about the source device and a list of measurements associated with the event. Each measurement contains:
 
 * **metric**: Name of the measured metric
 * **value**: Numeric value of the measured value
 * **unit**: Unit associated with the measurement
+
+## Actuator Event Structure
+Each event of type "actuator" contains metadata about the target actuator and the desired state. The payload includes:
+* **actuator_name**: Name of the actuator to be controlled
+* **target_state**: Desired state of the actuator (ON or OFF)
+
+## Rules Event Structure
+Each event of type "rules" contains information about the automation rules being created, updated, or deleted. The payload includes:
+* **rule_id**: Unique identifier of the rule
+* **action**: Action performed on the rule (create, update, delete)
+* **rule_data**: The actual rule data being created or updated (if applicable)
 
 # RULE MODEL
 
@@ -113,23 +111,29 @@ Automation rules define how the system reacts to sensor measurements. A rule eva
 ```json
 {
   "id": 1,
+  "name" : "string",
   "sensor_name": "string",
   "metric_name": "string",
-  "operator": "< | > | <= | >= | == | !=",
-  "threshold": 0.0,
+  "operator": "< | > | <= | >= | = ",
+  "threshold_value": 0.0,
+  "unit": "string",
   "actuator_name": "string",
   "target_state": "ON | OFF"
+  "rule_enabled": true | false
 }
 ```
 ### Field description
 
 * **id**: Unique identifier of the rule
+* **name**: Name of the rule
 * **sensor_name**: Name of the sensor that triggers the rule
 * **metric_name**: Name of the metric used in the condition
 * **operator**: Comparison operator used for the rule
-* **threshold**: Threshold value used for the comparison
+* **threshold_value**: Threshold value used for the comparison
+* **unit**: Unit associated with the metric
 * **actuator_name**: Target actuator that will be triggered
 * **target_state**: Desired actuator state (ON or OFF)
+* **rule_enabled**: Indicates whether the rule is currently enabled or disabled
 
 ## Rule evaluation
 
