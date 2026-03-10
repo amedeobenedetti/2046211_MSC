@@ -1,17 +1,21 @@
 # SYSTEM OVERVIEW
-The Mars Habitat Automation Platform is a distributed system designed to monitor and control a simulated Mars habitat environment.
+
+The Mars Habitat Control Panel is a distributed system designed to monitor and control a simulated Mars habitat environment.
+
 The system collects data from heterogeneous IoT devices provided by a simulator. These devices expose data through two mechanisms:
 
 * REST sensors that must be periodically polled
 * Telemetry streams that publish events asynchronously
 
 Incoming data is normalized into a unified internal event format and distributed through a message broker to the internal services.
+
 The system processes sensor data in real time and evaluates automation rules defined by the user. When a rule condition is satisfied, the system triggers the corresponding actuator through the simulator API.
+
 The platform also provides a real-time dashboard that allows users to:
 
 * monitor sensor values
-* observe actuator states
 * create and manage automation rules
+* observe actuator states
 * manually control actuators
 
 The system is implemented as a distributed event-driven architecture composed of multiple microservices communicating through RabbitMQ and using PostgreSQL for persistent rule storage.
@@ -64,7 +68,7 @@ The system is implemented as a distributed event-driven architecture composed of
 ## CONTAINER_NAME: mars-simulator
 
 ### DESCRIPTION:
-This container runs the Mars IoT simulator. It simulates heterogeneous sensors, telemetry streams, and actuators representing the Mars habitat infrastructure.
+Runs the Mars IoT simulator. It simulates heterogeneous sensors, telemetry streams, and actuators representing the Mars habitat infrastructure.
 
 ### USER STORIES:
 1) As a user, I want to see the latest value of all sensors so that I can monitor the habitat environment.
@@ -89,19 +93,24 @@ This container runs the Mars IoT simulator. It simulates heterogeneous sensors, 
 8080:8080
 
 ### DESCRIPTION:
-The simulator exposes REST APIs used to retrieve sensor data, discover telemetry topics, and control actuators.
+The simulator container is an external dependency packaged as a prebuilt image. It exposes habitat discovery endpoints, REST sensor data, telemetry topic streams, and actuator control APIs used by the other services.
 
 ### PERSISTENCE EVALUATION
-The simulator does not persist data. It only generates simulated sensor measurements and actuator states during runtime.
+The simulator does not persist data.
 
 ### EXTERNAL SERVICES CONNECTIONS
 The simulator is accessed by internal services through HTTP requests.
+
+#### MICROSERVICE: mars-simulator
+- TYPE: external system
+- DESCRIPTION: Simulates the Mars habitat environment and exposes APIs for sensors, telemetry, and actuators.
+- PORTS: 8080
 
 
 ## CONTAINER_NAME: rabbitmq
 
 ### DESCRIPTION:
-RabbitMQ acts as the message broker used for asynchronous communication between system services.
+Provides the asynchronous event bus used to decouple ingestion, rule evaluation, dashboard updates, and actuator execution.
 
 ### USER STORIES:
 2) As a user, I want to receive real-time updates from sensors so that I can react quickly to environmental changes.
@@ -115,19 +124,24 @@ RabbitMQ acts as the message broker used for asynchronous communication between 
 15672:15672
 
 ### DESCRIPTION:
-RabbitMQ receives normalized sensor events from the ingestion service and distributes them to subscribed services such as the rule-service, dashboard-service, and actuator-service.
+The RabbitMQ container is the message broker of the system. It hosts the topic exchange used to route measurement, rule, and actuator events among microservices, and exposes the management interface for inspection.
 
 ### PERSISTENCE EVALUATION
-In the current configuration, messages are transient and not persisted.
+The RabbitMQ container is configured without an active persistent volume, so broker state is not guaranteed to survive container recreation.
 
 ### EXTERNAL SERVICES CONNECTIONS
-RabbitMQ communicates with the ingestion service (publisher) and the processing service (consumer).
+RabbitMQ does not integrate with third-party or external platform services. It is connected only to the internal microservices of this system.
+
+#### MICROSERVICE: rabbitmq
+- TYPE: middleware
+- DESCRIPTION: Routes events between microservices using topic-based messaging.
+- PORTS: 5672, 15672
 
 
 ## CONTAINER_NAME: mars-ingestion-service
 
 ### DESCRIPTION:
-The ingestion service is responsible for collecting sensor data from the Mars simulator and converting heterogeneous payloads into a unified event schema.
+Manages sensor acquisition from the Mars simulator, including periodic polling of REST sensors, subscription to telemetry streams, normalization of heterogeneous payloads, and publication of measurement events to RabbitMQ.
 
 ### USER STORIES:
 1) As a user, I want to see the latest value of all sensors so that I can monitor the habitat environment.
@@ -147,29 +161,49 @@ The ingestion service is responsible for collecting sensor data from the Mars si
 ### PORTS:
 8000:8000
 
+### DESCRIPTION:
+The Ingestion-Service container is responsible for interacting with the external Mars simulator. It discovers REST sensors, polls them every few seconds, subscribes to telemetry topics through streaming endpoints, converts raw payloads into a common event schema, and publishes measurement events on RabbitMQ using dedicated routing keys for REST sensors and telemetry sources.
+
 ### PERSISTENCE EVALUATION
 This service does not store data. It only transforms incoming sensor payloads and publishes normalized events.
 
 ### EXTERNAL SERVICES CONNECTIONS
-- Mars Simulator REST API
-- RabbitMQ message broker
+The Ingestion-Service container connects to the Mars simulator over HTTP and Server-Sent Events, and publishes messages to RabbitMQ.
 
 ### MICROSERVICES:
 
 #### MICROSERVICE: ingestion-service
 - TYPE: backend
-- DESCRIPTION: Polls REST sensors from the simulator, normalizes payloads, and publishes sensor events to RabbitMQ.
+- DESCRIPTION: Collects sensor and telemetry data from the simulator, normalizes it, and publishes unified measurement events.
 - PORTS: 8000
 - TECHNOLOGICAL SPECIFICATION:
-The service is implemented in Python and uses Pydantic models to represent normalized events and measurements.
+The microservice is developed in Python and uses FastAPI.
+It uses the following libraries and technologies:
+    - FastAPI: Provides the HTTP application and lifecycle hooks.
+    - Uvicorn: Runs the ASGI application inside the container.
+    - HTTPX: Performs HTTP requests to the simulator and consumes telemetry streams.
+    - Pika: Publishes normalized events to RabbitMQ.
+    - Pydantic: Defines the shared event schemas used across services.
 - SERVICE ARCHITECTURE:
-The service periodically polls sensors from the simulator, converts the payloads into UnifiedEvent objects, and publishes them to the RabbitMQ exchange.
+The service is realized with:
+    - a FastAPI entrypoint that starts background tasks on startup
+    - a poller module that discovers and periodically polls REST sensors
+    - a telemetry listener that subscribes to simulator telemetry topics
+    - a normalizer module that maps multiple schema families into a unified event model
+    - a simulator client for the external simulator API
+    - shared common models and RabbitMQ utilities
+
+- ENDPOINTS:
+
+    | HTTP METHOD | URL | Description | User Stories |
+    | ----------- | --- | ----------- | ------------ |
+    | GET | /health | Returns the service health status | |
 
 
 ## CONTAINER_NAME: mars-rule-service
 
 ### DESCRIPTION:
-The rule service is responsible for evaluating automation rules based on incoming sensor events.
+Manages automation rules, including persistence, retrieval, evaluation against measurement events, and generation of actuator trigger events.
 
 ### USER STORIES:
 9) As a user, I want to create automation rules so that the system can react automatically to sensor conditions.
@@ -189,29 +223,49 @@ The rule service is responsible for evaluating automation rules based on incomin
 ### PORTS:
 8001:8001
 
+### DESCRIPTION:
+The Rule-Service container stores automation rules in PostgreSQL and consumes both measurement events and rule-management events from RabbitMQ. When a measurement matches an enabled rule, the service creates an actuator event and publishes it on the broker. It also exposes an HTTP endpoint used by the dashboard to retrieve the current list of persisted rules.
+
 ### PERSISTENCE EVALUATION
-The service retrieves automation rules from the PostgreSQL database.
+The Rule-Service container requires persistent storage because automation rules are stored in PostgreSQL and must remain available after service restarts.
 
 ### EXTERNAL SERVICES CONNECTIONS
-- RabbitMQ
-- PostgreSQL
-- Actuator Service
+The Rule-Service container connects to RabbitMQ to consume measurement and rule events and to publish actuator events. It connects to PostgreSQL to store and update rules.
 
 ### MICROSERVICES:
 
 #### MICROSERVICE: rule-service
 - TYPE: backend
-- DESCRIPTION: Consumes sensor events and evaluates automation rules stored in the database.
+- DESCRIPTION: Persists automation rules, evaluates incoming measurement events, and emits actuator trigger events.
 - PORTS: 8001
 - TECHNOLOGICAL SPECIFICATION:
-Implemented in Python using an event-driven architecture.
+The microservice is developed in Python and uses FastAPI.
+It uses the following libraries and technologies:
+    - FastAPI: Exposes REST endpoints and startup lifecycle management.
+    - SQLAlchemy: Maps the Rule entity and executes CRUD operations on PostgreSQL.
+    - Psycopg: Supports PostgreSQL connectivity.
+    - Pika: Consumes measurement and rule events from RabbitMQ and publishes actuator events.
+    - Pydantic: Validates rule and event payloads.
 - SERVICE ARCHITECTURE:
-When a new sensor event arrives, the service checks whether any rule conditions are satisfied and emits actuator commands if necessary.
+The service is realized with:
+    - a FastAPI application with a lifespan hook that starts RabbitMQ consumers
+    - a repository layer for rule persistence operations
+    - a rule engine that compares measurements with thresholds and operators
+    - event handlers for measurement events and rule-management events
+    - SQLAlchemy models and database session configuration
+
+- ENDPOINTS:
+
+    | HTTP METHOD | URL | Description | User Stories |
+    | ----------- | --- | ----------- | ------------ |
+    | GET | /health | Returns the service health status ||
+    | GET | /rules | Returns all persisted automation rules | |
+
 
 ## CONTAINER_NAME: mars-dashboard-service
 
 ### DESCRIPTION:
-The dashboard service aggregates sensor data and provides real-time information used by the user interface.
+Provides the main application API for monitoring the habitat state, inspecting simulator resources, managing automation rules, and issuing manual actuator commands.
 
 ### USER STORIES:
 1) As a user, I want to see the latest value of all sensors so that I can monitor the habitat environment.
@@ -229,17 +283,59 @@ The dashboard service aggregates sensor data and provides real-time information 
 ### PORTS:
 8003:8003
 
+### DESCRIPTION:
+The Dashboard-Service container consumes measurement events to maintain the latest in-memory state for each source and exposes HTTP endpoints used by the frontend. It also proxies simulator resource discovery requests, forwards rule-management commands through RabbitMQ, and publishes manual actuator commands for downstream execution.
+
 ### PERSISTENCE EVALUATION
-The service does not persist data. It consumes real-time events from RabbitMQ.
+The Dashboard-Service container does not require persistent storage. It keeps the latest known state of each source in memory.
 
 ### EXTERNAL SERVICES CONNECTIONS
-- RabbitMQ
-- Frontend Service
+The Dashboard-Service container connects to RabbitMQ to consume measurement events and publish rule or actuator events. It also connects to the Mars simulator to retrieve the lists of sensors, telemetry topics, and actuators, and connects to the Rule-Service HTTP API to retrieve rules.
+
+### MICROSERVICES:
+
+#### MICROSERVICE: dashboard-service
+- TYPE: backend
+- DESCRIPTION: Exposes monitoring, actuator-control, and rule-management endpoints for the frontend and maintains an in-memory state store.
+- PORTS: 8003
+- TECHNOLOGICAL SPECIFICATION:
+The microservice is developed in Python and uses FastAPI.
+It uses the following libraries and technologies:
+    - FastAPI: Provides REST endpoints and startup lifecycle logic.
+    - Pika: Consumes measurement events and publishes actuator or rule events.
+    - HTTPX: Calls the Mars simulator and the Rule-Service HTTP API.
+    - Pydantic: Validates event payloads.
+    - Threading primitives: Protect the in-memory state store during concurrent access.
+- SERVICE ARCHITECTURE:
+The service is realized with:
+    - a FastAPI application with CORS enabled for the frontend
+    - a RabbitMQ consumer that updates the state store from measurement events
+    - handler functions for manual actuator commands and rule-management requests
+    - a state store component that keeps the latest event for each source
+    - an HTTP client for simulator and rule-service integration
+
+- ENDPOINTS:
+
+    | HTTP METHOD | URL | Description | User Stories |
+    | ----------- | --- | ----------- | ------------ |
+    | GET | /health | Returns the service health status ||
+    | GET | /state | Returns the current state of all known sources | |
+    | GET | /sensors/{source_name} | Returns the current state of one source | |
+    | GET | /sensors | Returns the list of simulator REST sensors | |
+    | GET | /telemetries/{source_name} | Returns the current state of one telemetry source | |
+    | GET | /telemetries | Returns the list of telemetry topics |  |
+    | GET | /actuators | Returns the list of actuators |  |
+    | POST | /actuators/{actuator_name} | Publishes a manual actuator command |  |
+    | GET | /rules | Returns the list of automation rules |  |
+    | PUT | /rule | Publishes an add-rule event |  |
+    | POST | /rules/{rule_id} | Publishes a toggle-rule event |  |
+    | PUT | /rules/{rule_id} | Publishes an update-rule event |  |
+    | DELETE | /rules/{rule_id} | Publishes a delete-rule event |  |
 
 ## CONTAINER_NAME: mars-actuator-service
 
 ### DESCRIPTION:
-The actuator service is responsible for interacting with the Mars simulator to control actuators.
+Consumes actuator events and executes the corresponding commands on the Mars simulator actuators.
 
 ### USER STORIES:
 6) As a user, I want to see the list of available actuators so that I know which systems can be controlled.
@@ -253,18 +349,44 @@ The actuator service is responsible for interacting with the Mars simulator to c
 ### PORTS:
 8004:8004
 
+### DESCRIPTION:
+The Actuator-Service container listens for actuator trigger events on RabbitMQ. For both manual commands and automatically triggered rule actions, it invokes the Mars simulator actuator API and applies the requested ON or OFF state to the target device.
+
 ### PERSISTENCE EVALUATION
-This service does not persist data.
+The Actuator-Service container does not require persistent storage.
 
 ### EXTERNAL SERVICES CONNECTIONS
-- Mars Simulator API
-- RabbitMQ
-- Rule Service
+The Actuator-Service container connects to RabbitMQ to consume actuator events and to the Mars simulator through HTTP to apply actuator commands.
+
+### MICROSERVICES:
+
+#### MICROSERVICE: actuator-service
+- TYPE: backend
+- DESCRIPTION: Receives actuator events from RabbitMQ and sends the corresponding command to the simulator actuator API.
+- PORTS: 8004
+- TECHNOLOGICAL SPECIFICATION:
+The microservice is developed in Python and uses FastAPI.
+It uses the following libraries and technologies:
+    - FastAPI: Provides the application container and health endpoint.
+    - Pika: Consumes actuator events from RabbitMQ.
+    - HTTPX: Sends actuator commands to the Mars simulator.
+    - Pydantic: Validates actuator event payloads.
+- SERVICE ARCHITECTURE:
+The service is realized with:
+    - a FastAPI application with a lifespan hook that starts the RabbitMQ consumer
+    - an event handler that validates actuator events
+    - a simulator client that posts state changes to simulator actuators
+
+- ENDPOINTS:
+
+    | HTTP METHOD | URL | Description | User Stories |
+    | ----------- | --- | ----------- | ------------ |
+    | GET | /health | Returns the service health status |  |
 
 ## CONTAINER_NAME: mars-db
 
 ### DESCRIPTION:
-This container runs a PostgreSQL database used to persist automation rules.
+Provides persistent relational storage for the automation rules managed by the rule engine.
 
 ### USER STORIES:
 9) As a user, I want to create automation rules so that the system can react automatically to sensor conditions.
@@ -280,31 +402,42 @@ This container runs a PostgreSQL database used to persist automation rules.
 ### PORTS:
 5432:5432
 
+### DESCRIPTION:
+The postgres container is the relational database used by the platform to store automation rules. It is initialized through the SQL scripts contained in the project and mounted on a local volume so that rule data can survive container restarts and be reused by the Rule-Service.
+
 ### PERSISTENCE EVALUATION
-Automation rules are stored persistently so that they remain available even after system restarts.
+The postgres container is the persistence layer of the platform and therefore requires persistent storage. It uses a mounted volume under `./postgres/postgres_data`.
 
 ### EXTERNAL SERVICES CONNECTIONS
-The database is accessed by the processing service.
+It is used internally by the Rule-Service for rule persistence.
 
 ### MICROSERVICES:
 
 #### MICROSERVICE: postgres-db
-- TYPE: backend
-- DESCRIPTION: Stores automation rules used by the processing service.
+- TYPE: database
+- DESCRIPTION: Stores the `rules` table used by the rule engine and serves database queries from the Rule-Service.
 - PORTS: 5432
 - TECHNOLOGICAL SPECIFICATION:
-PostgreSQL database initialized with an SQL script included in the project.
+The microservice uses PostgreSQL 16 as relational DBMS.
+It is configured with:
+    - database user `mars`
+    - database password `mars`
+    - initial database `mars_rules`
+    - initialization SQL scripts mounted from `postgres/init`
 - SERVICE ARCHITECTURE:
-The database stores rule records containing sensor conditions and actuator actions.
+The service is realized with:
+    - a PostgreSQL container image
+    - an initialization script that creates the application schema
+    - a mounted data directory for persistence across restarts
 
 - DB STRUCTURE:
 
-**rules** : | **id** | sensor_name | metric_name | operator | threshold | actuator_name | target_state |
+    **_Rule_** : | **_id_** | name | sensor_name | metric_name | operator | threshold_value | unit | actuator_name | target_state | rule_enabled |
 
 ## CONTAINER_NAME: mars-frontend-service
 
 ### DESCRIPTION:
-The frontend service provides the graphical user interface used to interact with the system.
+Provides the web user interface for habitat monitoring, telemetry visualization, actuator control, and automation rule management.
 
 ### USER STORIES:
 3) As a user, I want to visualize sensor data on a dashboard so that I can easily understand the state of the habitat.
@@ -318,8 +451,24 @@ The frontend service provides the graphical user interface used to interact with
 ### PORTS:
 8002:8002
 
+### DESCRIPTION:
+The Frontend-Service container serves the operator-facing web application. It provides a dashboard page with live sensor cards, actuator toggles, telemetry charts, and warning notifications, and a rules page where operators can create, edit, enable, disable, and delete automation rules.
+
 ### PERSISTENCE EVALUATION
 The frontend does not store data locally.
 
 ### EXTERNAL SERVICES CONNECTIONS
-- Dashboard Service
+The Frontend-Service container communicates with the Dashboard-Service HTTP API. It also loads Chart.js from a CDN to render telemetry graphs in the browser.
+
+### MICROSERVICES:
+
+#### MICROSERVICE: frontend-service
+- TYPE: frontend
+- DESCRIPTION: Serves the HTML, CSS, and JavaScript pages used by the operator to monitor and control the habitat.
+- PORTS: 8002
+- PAGES:
+
+    | Name | Description | Related Microservice | User Stories |
+    | ---- | ----------- | -------------------- | ------------ |
+    | index.html | Displays the monitoring dashboard with sensors, actuators, telemetry charts, and warning notifications | dashboard-service | |
+    | rules.html | Displays the automation rule management interface | dashboard-service, rule-service |  |

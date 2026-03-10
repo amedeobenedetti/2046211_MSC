@@ -1,6 +1,6 @@
 # SYSTEM OVERVIEW
 
-The Mars Habitat Automation Platform is a distributed system designed to monitor and control a simulated Mars habitat environment.
+The Mars Habitat Control Panel is a distributed system designed to monitor and control a simulated Mars habitat environment.
 
 The system collects data from heterogeneous IoT devices provided by a simulator. These devices expose data through two mechanisms:
 
@@ -14,15 +14,15 @@ The system processes sensor data in real time and evaluates automation rules def
 The platform also provides a real-time dashboard that allows users to:
 
 * monitor sensor values
-* observe actuator states
 * create and manage automation rules
+* observe actuator states
 * manually control actuators
 
 The system is implemented as a distributed event-driven architecture composed of multiple microservices communicating through RabbitMQ and using PostgreSQL for persistent rule storage.
 
 # USER STORIES
 
-1) As a user, I want to see the latest value of all sensors so that I can monitor the habitat environment.
+1) As a user, I want to view the current state of all sensors so that I can monitor the habitat in real time.
 
 2) As a user, I want to receive real-time updates from sensors so that I can react quickly to environmental changes.
 
