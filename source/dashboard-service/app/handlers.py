@@ -30,6 +30,15 @@ def handle_measurement_event(event: UnifiedEvent) -> None:
         m_event.status,
     )
 
+def handle_actuator_event(event: UnifiedEvent) -> None:
+    logger.info("Received actuator event: event_id=%s", event.event_id)
+    if event.event_type != "actuator":
+        logger.warning("Received non-actuator event: event_id=%s", event.event_id)
+        return 
+    state_store.add_event(event)
+
+
+
 def get_state() -> dict[str, dict[str, Any]]:
     return state_store.get_all()
 

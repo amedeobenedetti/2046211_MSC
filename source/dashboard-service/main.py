@@ -5,10 +5,12 @@ from app.common.rabbitmq_config import (
     RABBITMQ_REST_SENSORS_ROUTING_KEY,
     SIMULATOR_BASE_URL,
     RULES_ENGINE_URL,
-    RABBITMQ_TELEMETRY_SENSORS_ROUTING_KEY
+    RABBITMQ_TELEMETRY_SENSORS_ROUTING_KEY,
+    RABBITMQ_ACTUATOR_ROUTING_KEY
 )
 from app.handlers import (
-    handle_measurement_event, 
+    handle_measurement_event,
+    handle_actuator_event, 
     get_state, 
     get_state_by_source, 
     send_actuator_command, 
@@ -30,14 +32,25 @@ logging.basicConfig(
 )
 
 
-consumer = None
+sensor_consumer = None
+actuator_consumer = None
+
 
 def run_consumer() -> None:
-    global consumer
-    consumer = RabbitMQConsumer("dashboard",RABBITMQ_EXCHANGE, [f"{RABBITMQ_REST_SENSORS_ROUTING_KEY}.#", f"{RABBITMQ_TELEMETRY_SENSORS_ROUTING_KEY}.#"], handle_measurement_event)
-    consumer.connect()
-    run_in_threadpool(consumer.start_consuming())
-    print("Consumer started")
+    global sensor_consumer
+    sensor_consumer = RabbitMQConsumer("dashboard",RABBITMQ_EXCHANGE, [f"{RABBITMQ_REST_SENSORS_ROUTING_KEY}.#", f"{RABBITMQ_TELEMETRY_SENSORS_ROUTING_KEY}.#"], handle_measurement_event)
+    sensor_consumer.connect()
+    run_in_threadpool(sensor_consumer.start_consuming())
+    print("Sensor Consumer started")
+
+def run_actuator_consumer() -> None:
+    global actuator_consumer
+    actuator_consumer = RabbitMQConsumer("dashboard",RABBITMQ_EXCHANGE, [f"{RABBITMQ_ACTUATOR_ROUTING_KEY}"], handle_actuator_event)
+    actuator_consumer.connect()
+    run_in_threadpool(actuator_consumer.start_consuming())
+    print("Actuator Consumer started")
+
+
 
 
 import threading
@@ -46,6 +59,8 @@ import threading
 async def lifespan(app: FastAPI):
     thread = threading.Thread(target=run_consumer, daemon=True)
     thread.start()
+    thread2 = threading.Thread(target=run_actuator_consumer, daemon=True)
+    thread2.start()
     print("Startup Completed!")
     yield
     print("Shutdown Completed!")

@@ -56,7 +56,7 @@ services:
       POSTGRES_PASSWORD: mars
       POSTGRES_DB: mars_rules
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - ./postgres/postgres_data:/var/lib/postgresql/data
       - ./postgres/init:/docker-entrypoint-initdb.d
@@ -67,7 +67,7 @@ services:
       test: ["CMD-SHELL", "pg_isready -U mars -d mars"]
       interval: 5s
       timeout: 5s
-      retries: 10
+      retries: 100
       start_period: 10s
 
   rule-service:
@@ -78,6 +78,8 @@ services:
       - "8001:8001"
     volumes:
       - ./rule-service:/app
+    # environment:
+    #   - POSTGRES_PORT: 5432
     depends_on:
       ingestion-service:
         condition: service_started

@@ -93,61 +93,69 @@ async function loadSensors() {
         grid.innerHTML = ""
 
         Object.values(data).forEach(sensor => {
-            if (sensor.source_kind === "telemetry_topic") {
-                updateTelemetry(sensor)
+            if (sensor.source_kind == "ac_notification"){
+                Object.values(sensor.notif).forEach(notif => {
+                    showNotification(`Rule "${notif.rule_name}" triggered`)
+                })
             }
-            if (sensor.status === "warning") {
-                const key = sensor.source_name + sensor.timestamp
-                if (!shownWarnings.has(key)) {
-                    showNotification(`Warning from ${sensor.source_name}`)
-                    shownWarnings.add(key)
+            else{
+
+                if (sensor.source_kind === "telemetry_topic") {
+                    updateTelemetry(sensor)
                 }
-            }
-            sensor.measurements.forEach(measure => {
-
-                const card = document.createElement("div")
-                card.className = "sensor-card"
-
-                const statusClass =
+                if (sensor.status === "warning") {
+                    const key = sensor.source_name + sensor.timestamp
+                    if (!shownWarnings.has(key)) {
+                        showNotification(`Warning from ${sensor.source_name}`)
+                        shownWarnings.add(key)
+                    }
+                }
+                sensor.measurements.forEach(measure => {
+                
+                    const card = document.createElement("div")
+                    card.className = "sensor-card"
+                    
+                    const statusClass =
                     sensor.status === "ok"
-                        ? "status-ok"
-                        : "status-warning"
-
-                card.innerHTML = `
+                    ? "status-ok"
+                    : "status-warning"
+                    
+                    card.innerHTML = `
                     <div class="sensor-title">
-                        ${sensor.source_name}
+                    ${sensor.source_name}
                     </div>
 
                     <div class="sensor-value">
-                        ${measure.value} ${measure.unit}
+                    ${measure.value} ${measure.unit}
                     </div>
-
+                    
                     <div class="sensor-unit">
-                        ${measure.metric} (${measure.unit})
+                    ${measure.metric} (${measure.unit})
                     </div>
-
+                    
                     <div class="${statusClass}">
-                        status: ${sensor.status}
+                    status: ${sensor.status}
                     </div>
-
+                    
                     <div class="sensor-timestamp">
-                        ${new Intl.DateTimeFormat(
-                            'en-US',
-                            {
-                                dateStyle: 'short',
-                                timeStyle: 'short',
-                                timeZone: 'Europe/Rome'
-                            }
-                        ).format(new Date(sensor.timestamp))}
+                    ${new Intl.DateTimeFormat(
+                        'en-US',
+                        {
+                            dateStyle: 'short',
+                            timeStyle: 'short',
+                            timeZone: 'Europe/Rome'
+                        }
+                    ).format(new Date(sensor.timestamp))}
                     </div>
-                `
-
-                grid.appendChild(card)
-
-            })
-
+                    `
+                    
+                    grid.appendChild(card)
+                
+                })
+            }
+            
         })
-
+        
     } catch (err) {
 
         console.error("Error loading sensors:", err)

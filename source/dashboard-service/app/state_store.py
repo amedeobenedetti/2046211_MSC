@@ -1,7 +1,7 @@
 from threading import Lock
 from typing import Any
 
-from app.common.models import MeasurementEvent
+from app.common.models import MeasurementEvent, UnifiedEvent, ActuatorEvent
 
 
 class StateStore:
@@ -30,10 +30,36 @@ class StateStore:
                     for m in event.measurements
                 ],
             }
+    
+    def add_event(self, event: UnifiedEvent):
+        with self._lock:
+            if event.event_type == "actuator":
+                
+                ac_event = ActuatorEvent.model_validate(event.event_payload)
+                if ac_event.rule_id == -1:
+                    return
+                
+                if self._state.get("ac_notifications", None) is None:
+                    self._state["ac_notifications"] = {}
+                
+                self._state["ac_notifications"]["source_kind"] = "ac_notification"
+                self._state["ac_notifications"]["notif"] = {}
+                self._state["ac_notifications"]["notif"][ac_event.rule_id] = {
+                    "event_id": ac_event.event_id,
+                    "actuator_name": ac_event.actuator_name,
+                    "target_state": ac_event.target_state,
+                    "rule_id": ac_event.rule_id,
+                    "rule_name": ac_event.rule_name,
+                    "sensor_name": ac_event.sensor_name
+                }
+
 
     def get_all(self) -> dict[str, dict[str, Any]]:
         with self._lock:
-            return dict(self._state)
+            ris = dict(self._state)
+            if self._state.get("ac_notifications", None) is not None:
+                self._state["ac_notifications"] = {}
+            return ris 
 
     def get_one(self, source_name: str) -> dict[str, Any] | None:
         with self._lock:
