@@ -1,6 +1,52 @@
-import { getRules, createRule, updateRule, deleteRule } from './api.js';
+import { getRules, createRule, updateRule, deleteRule, setRuleState } from './api.js';
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+let isSubmitting = false;
+
+function showNotification(message) {
+    const container = document.getElementById("notificationContainer");
+
+    if (!container) {
+        return;
+    }
+
+    const notif = document.createElement("div");
+    notif.className = "notification";
+    notif.textContent = message;
+
+    container.appendChild(notif);
+
+    setTimeout(() => {
+        notif.remove();
+    }, 5000);
+}
+
+function setControlsDisabled(disabled) {
+    document
+        .querySelectorAll("#ruleForm input, #ruleForm select, #ruleForm button, #rules input, #rules select, #rules button")
+        .forEach(element => {
+            element.disabled = disabled;
+        });
+}
+
+async function runRuleOperation(operationLabel, action) {
+    if (isSubmitting) {
+        return;
+    }
+
+    isSubmitting = true;
+    setControlsDisabled(true);
+    showNotification(`Operation in progress: ${operationLabel}`);
+
+    try {
+        await action();
+        await sleep(3000);
+        await loadRules();
+    } finally {
+        setControlsDisabled(false);
+        isSubmitting = false;
+    }
+}
 
 async function loadRules() {
     const rules = await getRules();
@@ -14,12 +60,19 @@ async function loadRules() {
 
     rules.forEach(r => {
         const id = "rule" + r.id;
+        const isEnabled = r.rule_enabled ?? r.enabled ?? true;
         const card = document.createElement("div");
         card.className = "rule-card";
 
         card.innerHTML = `
-        <div class="rule-title">
-            <input id="${id}name" value="${r.name}">
+        <div class="rule-header">
+            <div class="rule-title">
+                <input id="${id}name" value="${r.name}">
+            </div>
+            <label class="switch rule-switch">
+                <input id="${id}enabled" type="checkbox" ${isEnabled ? "checked" : ""}>
+                <span class="slider"></span>
+            </label>
         </div>
         <div class="rule-condition">
             IF
@@ -42,14 +95,21 @@ async function loadRules() {
                 <option ${r.target_state == "OFF" ? "selected" : ""}>OFF</option>
             </select>
         </div>
-        </div>
-        <div class="button-container"> <!-- Contenitore per i pulsanti -->
+        <div class="button-container">
             <button class="update-btn" id="${id}update">Update</button>
             <button class="rule-delete" id="${id}delete">✕</button>
         </div>
     `;
 
     container.appendChild(card);
+
+        document.getElementById(id + "enabled").onchange = async (event) => {
+            const newState = event.target.checked;
+
+            await runRuleOperation(`Toggle rule "${r.name}"`, async () => {
+                await setRuleState(r.id, newState);
+            });
+        };
 
         // Aggiornamento della regola
         document.getElementById(id + "update").onclick = async () => {
@@ -64,17 +124,15 @@ async function loadRules() {
                 target_state: document.getElementById(id + "target_state").value
             };
 
-            await updateRule(rule);
-            sleep(3000).then(() => {
-                loadRules();
+            await runRuleOperation(`Update rule "${rule.name}"`, async () => {
+                await updateRule(rule);
             });
         };
 
         // Eliminazione della regola
         document.getElementById(id + "delete").onclick = async () => {
-            await deleteRule(r.id);
-            sleep(3000).then(() => {
-                loadRules();
+            await runRuleOperation(`Delete rule "${r.name}"`, async () => {
+                await deleteRule(r.id);
             });
         };
     });
@@ -94,9 +152,8 @@ document.getElementById("ruleForm").onsubmit = async (e) => {
         target_state: document.getElementById("state").value
     };
 
-    await createRule(rule);
-    sleep(3000).then(() => {
-        loadRules();
+    await runRuleOperation(`Create rule "${rule.name}"`, async () => {
+        await createRule(rule);
     });
 }
 

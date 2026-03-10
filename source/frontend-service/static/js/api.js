@@ -53,6 +53,18 @@ export async function updateRule(rule) {
     })
 }
 
+export async function setRuleState(ruleId, state) {
+    await fetch(DASHBOARD_API + "/rules/" + ruleId, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            state: state
+        })
+    })
+}
+
 export async function deleteRule(ruleId) {
     await fetch(DASHBOARD_API + "/rules/" + ruleId, {
         method: "DELETE"

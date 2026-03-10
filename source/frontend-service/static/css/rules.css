@@ -113,6 +113,16 @@ background: #16a34a;
 transform: translateY(-1px);
 }
 
+.sensor-card input:disabled,
+.sensor-card select:disabled,
+.sensor-card button:disabled,
+.rule-card input:disabled,
+.rule-card select:disabled,
+.rule-card button:disabled {
+opacity: 0.6;
+cursor: not-allowed;
+}
+
 .grid-container {
     display: flex;
     flex-direction: column;
@@ -130,6 +140,13 @@ transform: translateY(-1px);
     display: flex;
     flex-direction: column;
     gap: 10px;
+}
+
+.rule-header {
+display: flex;
+justify-content: space-between;
+align-items: flex-start;
+gap: 16px;
 }
 
 .rule-card:hover {
@@ -164,6 +181,13 @@ font-size: 18px;
 font-weight: 600;
 margin-bottom: 10px;
 color: #cbd5f5;
+flex: 1;
+min-width: 0;
+}
+
+.rule-title input {
+width: 100%;
+box-sizing: border-box;
 }
 
 .rule-condition {
@@ -184,6 +208,52 @@ color: #22c55e;
     display: flex;
     gap: 10px;
     margin-top: 10px;
+}
+
+.switch {
+position: relative;
+display: inline-block;
+width: 60px;
+height: 34px;
+flex: 0 0 60px;
+}
+
+.switch input {
+opacity: 0;
+width: 0;
+height: 0;
+}
+
+.slider {
+position: absolute;
+cursor: pointer;
+top: 0;
+left: 0;
+right: 0;
+bottom: 0;
+background-color: #334155;
+transition: .4s;
+border-radius: 34px;
+}
+
+.slider:before {
+position: absolute;
+content: "";
+height: 26px;
+width: 26px;
+left: 4px;
+bottom: 4px;
+background-color: white;
+transition: .4s;
+border-radius: 50%;
+}
+
+input:checked + .slider {
+background-color: #22c55e;
+}
+
+input:checked + .slider:before {
+transform: translateX(26px);
 }
 
 .update-btn, .rule-delete {
@@ -217,4 +287,19 @@ color: #22c55e;
 color: #64748b;
 margin-top: 20px;
 font-style: italic;
+}
+
+#notificationContainer {
+position: fixed;
+top: 20px;
+right: 20px;
+z-index: 1000;
+}
+
+.notification {
+background: #ffcc00;
+color: #020617;
+padding: 10px;
+margin-bottom: 10px;
+border-radius: 5px;
 }
